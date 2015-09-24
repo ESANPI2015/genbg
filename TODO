@@ -1,0 +1,82 @@
+TODO
+
+* Use bagle library ... Embed this into the toolchain DONE
+* Include sources and headers from bagle library DONE
+* Find a library for floatToFixed and fixedToFloat conversion
+
+* As and alternative to bg_evaluate we introduce DONE
+  bg_generate(graph, output file name, flavour)
+
+  This function should do the following:
+  If the flavour is 'C':
+  - create a header file
+  - create a source file DONE
+  - insert I/O wrappers in header and source file (for EXTERNAL I/O)
+    * bool input (id, *value)
+    * bool output (id, value)
+  - traverse the given graph in evaluation order (original bagle order)
+    * produce input statements for each input node
+      for every input node i
+	      success = false
+	      while (!success)
+		      success = input(i, &out[i])
+	      end while
+	      bg_setValue(i, out[i])
+      end for
+    * produce 
+      for every edge k @ input i @ node j
+	      node[j].in[i] = node[j].in[i] merge_func (edge[k].weight * edge[k].value)
+      end for
+    * produce
+      node[j].out = node[j].func()
+    * produce
+      for every edge k @ node j
+	      edge[k].value = node[j].out
+      end for
+    * NOTE: We can just insert a call to bg_evaluate, right?!? YES, DONE
+    * produce for every output node an output statement
+  - wrap all the above into a main loop NO,WE DONT NEED A LOOP
+
+  I. REVIEW:
+  - creates source file only atm
+  - the eval and merge function ptrs generate the code:
+    * ... but they are huge and should be split into smaller parts (a generator for each node/merge)
+    * ... for the common glue code, they should call common functions
+    * ... maybe we could change the node and merge interface to include a generator func ptr
+  - SUBGRAPH nodes are not handled:
+    * ... the generator should override all eval/merge func ptrs of the subgraph
+    * ... then it could call bg_graph_evaluate
+    * ... OR it could recursively call bg_generate :)
+  - File I/O should be removed from bg_generate
+  - Everything should be split into more readable parts
+  - Maybe its a good thing to use a template engine like Googles ctemplate
+
+  II. REVIEW:
+  - header and source are generated and are functional
+  - SUBGRAPHS are handled but not correctly
+    * ... SUBGRAPH input merges have no effect
+    * ... multiple outputs will override each other
+  - bg_generate is called recursively (but this is really ugly stuff)
+  - template engine is nice and works correctly
+  -> It might be better to transform the graph itself to code (not using eval and merge generators)
+    * ... Go through all nodes in eval order
+    * Do not call bg_evaluate other than to determine eval order
+    * Produce a context for each node (local storage)
+    * Keep the concept of toplvl/!toplvl!
+    * Handle merges and nodes in the same context!
+
+  III. REVIEW
+  - Call to bg_graph_evaluate still ugly
+  - SUBGRAPHS are handled correctly now (but needs further testing)
+  - WORKS :D
+  -> Add commandline tools
+
+  If the flavour is 'VHDL':
+  (Now the real work begins)
+  - NOTE: Use some of the stuff from PicoBlazeArray project!
+
+
+* What would be nice is a bg_split and/or bg_merge functionality
+  We could then do partitioning into N parts or such before generating with bg_generate
+  (Or maybe something like bg_cluster)
+  ATTENTION: Not all nodes are good for FPGAs!!!

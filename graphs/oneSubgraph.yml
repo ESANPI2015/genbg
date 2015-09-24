@@ -1,0 +1,44 @@
+nodes:
+  - inputs:
+      - {idx: 0, bias: 0, default: 0.0, type: 'SUM'}
+    type: 'INPUT'
+    id: 100
+  - inputs:
+      - {idx: 0, bias: 0, default: 0.0, type: 'SUM'}
+    type: 'INPUT'
+    id: 200
+  - type: 'SUBGRAPH'
+    subgraph_name: 'simpleTest.yml'
+    id: 400
+    inputs:
+      - {idx: 0, bias: 0, default: 0.0, type: 'SUM'}
+      - {idx: 1, bias: 0, default: 0.0, type: 'SUM'}
+  - type: 'SIN'
+    inputs:
+      - {idx: 0, bias: 0, default: 0.0, type: 'SUM'}
+    id: 500
+  - type: 'OUTPUT'
+    id: 300
+    inputs:
+      - {idx: 0, bias: 0, default: 0.0, type: 'SUM'}
+edges:
+  - weight: 1
+    fromNodeId: 100
+    fromNodeOutputIdx: 0
+    toNodeId: 400
+    toNodeInputIdx: 0
+  - weight: 1
+    fromNodeId: 200
+    fromNodeOutputIdx: 0
+    toNodeId: 400
+    toNodeInputIdx: 1
+  - weight: 1
+    fromNodeId: 500
+    fromNodeOutputIdx: 0
+    toNodeId: 300
+    toNodeInputIdx: 0
+  - weight: 1
+    fromNodeId: 400
+    fromNodeOutputIdx: 0
+    toNodeId: 500
+    toNodeInputIdx: 0
