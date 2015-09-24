@@ -1,4 +1,4 @@
-- Distributed Behaviour Graphs -
+-=Distributed Behaviour Graphs=-
 
 This work is based on the behaviour graphs introduced by Malte Langosz, DFKI.
 Originally, these graphs are topologically sorted and executed according to the sorting.
@@ -16,14 +16,14 @@ The idea:
 
 This is just proof-of-concept software which gives hints about how to extend the ROCK framework to support heterogenous, distributed systems in a consistent manner.
 
-- Status -
+-=Status=-
 
 DONE:
 * There is a behaviour graph to C generator
   - bg2dict_c generates a dictionary from behaviour graph spec (C language)
   - dict2src is a template engine using a dictionary and a template to generate src/header files
   - Templates: 
-    * include/bg_generate_header_template.h
-    * src/bg_generate_source_template.c
+     * include/bg_generate_header_template.h
+     * src/bg_generate_source_template.c
 
 * The generated files are a standalone version of a behaviour graph
