@@ -7,11 +7,11 @@
 
 /*This struct holds global data used by any function involved in code generation*/
 typedef struct {
-    int nodes;
-    int edges;
-    int code_lines;
-    int toplvl_inputs;
-    int toplvl_outputs;
+    unsigned int nodes;
+    unsigned int edges;
+    unsigned int code_lines;
+    unsigned int toplvl_inputs;
+    unsigned int toplvl_outputs;
     struct bg_list_t *visited_edges;
     FILE *out;
 } bg_generator_t;
@@ -35,13 +35,12 @@ bg_error bg_generator_finalize(bg_generator_t *generator);
 /*
  * @brief Takes a behaviour graph and produces a stand-alone implementation in C.
  *
- * NOTE: The generated stuff will be a dictionary with the following format:
- * token BG_GENERATE_DELIMITER replacement BG_GENERATE_DELIMITER
+ * The generated dictionary format depends on the template engine :)
  *
  * @param generator A pointer to a generator struct
  * @param graph A pointer to a behaviour graph
- * @param toplvl Defines if this function is called at the toplvl of the graph
+ * @param lvl Defines the current level of nesting (0 is toplvl!)
  */
-bg_error bg_graph_generate(bg_generator_t *generator, bg_graph_t *graph, const int toplvl);
+bg_error bg_graph_generate(bg_generator_t *generator, bg_graph_t *graph, const unsigned int lvl);
 
 #endif

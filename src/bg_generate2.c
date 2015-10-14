@@ -31,7 +31,7 @@ static void weight(bg_generator_t *g, const int index, const float value, const 
     writeDictionary(g->out, &entry);
 }
 
-bg_error bg_merge_generate (bg_generator_t *g, struct input_port_t *input_port, const int id, const int toplvl)
+bg_error bg_merge_generate (bg_generator_t *g, struct input_port_t *input_port, const int id, const unsigned int lvl)
 {
     bg_error err = bg_SUCCESS;
     bg_list_iterator_t it;
@@ -68,12 +68,8 @@ bg_error bg_merge_generate (bg_generator_t *g, struct input_port_t *input_port, 
             code(g, line);
             break;
         case bg_MERGE_TYPE_MEDIAN:
-            sprintf(line, "#erroe Implement me!");
-            code(g, line);
-            return bg_ERR_WRONG_TYPE;
+            return bg_ERR_NOT_IMPLEMENTED;
         default:
-            sprintf(line, "#error Undefined merge type");
-            code(g, line);
             return bg_ERR_WRONG_TYPE;
     }
 
@@ -117,6 +113,7 @@ bg_error bg_merge_generate (bg_generator_t *g, struct input_port_t *input_port, 
                 code(g, line);
                 break;
             case bg_MERGE_TYPE_MEDIAN:
+                return bg_ERR_NOT_IMPLEMENTED;
             default:
                 return bg_ERR_WRONG_TYPE;
         }
@@ -195,6 +192,7 @@ bg_error bg_merge_generate (bg_generator_t *g, struct input_port_t *input_port, 
                     code(g, line);
                     break;
                 case bg_MERGE_TYPE_MEDIAN:
+                    return bg_ERR_NOT_IMPLEMENTED;
                 default:
                     return bg_ERR_WRONG_TYPE;
             }
@@ -242,6 +240,7 @@ bg_error bg_merge_generate (bg_generator_t *g, struct input_port_t *input_port, 
             code(g, line);
             break;
         case bg_MERGE_TYPE_MEDIAN:
+            return bg_ERR_NOT_IMPLEMENTED;
         default:
             return bg_ERR_WRONG_TYPE;
     }
@@ -250,7 +249,7 @@ bg_error bg_merge_generate (bg_generator_t *g, struct input_port_t *input_port, 
     return err;
 }
 
-bg_error bg_node_generate(bg_generator_t *g, bg_node_t *n, const int toplvl)
+bg_error bg_node_generate(bg_generator_t *g, bg_node_t *n, const unsigned int lvl)
 {
     bg_error err = bg_SUCCESS;
     bg_list_iterator_t it;
@@ -263,14 +262,15 @@ bg_error bg_node_generate(bg_generator_t *g, bg_node_t *n, const int toplvl)
 
     /*At first we have to generate merges for each node input*/
     /*SPECIAL RULE 1: Suppress merge generation at toplvl INPUT nodes*/
-    if (toplvl && (n->type->id == bg_NODE_TYPE_INPUT))
+    if ((lvl == 0) && (n->type->id == bg_NODE_TYPE_INPUT))
         suppress = 1;
     /*SPECIAL RULE 2: Suppress merge generation at SUBGRAPH inputs*/
     if (n->type->id == bg_NODE_TYPE_SUBGRAPH)
         suppress = 1;
     for (i = 0; (i < n->input_port_cnt) && !suppress; ++i)
     {
-        bg_merge_generate(g, n->input_ports[i], i, toplvl);
+        if ((err = bg_merge_generate(g, n->input_ports[i], i, lvl)) != bg_SUCCESS)
+            return err;
     }
 
     suppress = 0;
@@ -278,7 +278,7 @@ bg_error bg_node_generate(bg_generator_t *g, bg_node_t *n, const int toplvl)
     switch (n->type->id)
     {
         case bg_NODE_TYPE_INPUT:
-            if (toplvl)
+            if (lvl == 0)
             {
                 sprintf(line, "\tresult = in[%u];", g->toplvl_inputs++);
                 code(g, line);
@@ -287,7 +287,7 @@ bg_error bg_node_generate(bg_generator_t *g, bg_node_t *n, const int toplvl)
             }
             break;
         case bg_NODE_TYPE_OUTPUT:
-            if (toplvl)
+            if (lvl == 0)
             {
                 sprintf(line, "\tout[%u] = merge[0];", g->toplvl_outputs++);
                 code(g, line);
@@ -340,19 +340,14 @@ bg_error bg_node_generate(bg_generator_t *g, bg_node_t *n, const int toplvl)
         case bg_NODE_TYPE_TANH:
             code(g,"\tresult = tanhf(merge[0]);");
             break;
-        case bg_NODE_TYPE_FSIGMOID:
-            sprintf(line, "#warning Implement me!");
-            code(g, line);
-            break;
         case bg_NODE_TYPE_SUBGRAPH:
-            /*TODO:
-             * Nearly working ... the problem is (as expected) global state handling
-             */
             code(g,"\t/*** SUBGRAPH START ***/");
-            bg_graph_generate(g, ((subgraph_data_t*)n->_priv_data)->subgraph, 0);
+            err = bg_graph_generate(g, ((subgraph_data_t*)n->_priv_data)->subgraph, lvl+1);
             code(g,"\t/*** SUBGRAPH END ***/");
             break;
+        case bg_NODE_TYPE_FSIGMOID:
         case bg_NODE_TYPE_EXTERN:
+            return bg_ERR_NOT_IMPLEMENTED;
         default:
             return bg_ERR_WRONG_TYPE;
     }
@@ -385,7 +380,7 @@ bg_error bg_node_generate(bg_generator_t *g, bg_node_t *n, const int toplvl)
     return err;
 }
 
-bg_error bg_graph_generate(bg_generator_t *g, bg_graph_t *graph, const int toplvl)
+bg_error bg_graph_generate(bg_generator_t *g, bg_graph_t *graph, const unsigned int lvl)
 {
     bg_error err = bg_SUCCESS;
     bg_node_t *current_node;
@@ -394,7 +389,7 @@ bg_error bg_graph_generate(bg_generator_t *g, bg_graph_t *graph, const int toplv
     code(g,"\t/*** BG_GRAPH_GENERATE BEGIN ***/");
 
     /*Call bg_graph_evaluate to determine evaluation order (ONLY AT TOPLEVEL)*/
-    if (toplvl)
+    if (lvl == 0)
     {
         err = bg_graph_evaluate(graph);
         if (err != bg_SUCCESS)
@@ -406,7 +401,9 @@ bg_error bg_graph_generate(bg_generator_t *g, bg_graph_t *graph, const int toplv
             current_node;
             current_node = bg_node_list_next(&it))
     {
-        bg_node_generate(g, current_node, toplvl);
+        if ((err = bg_node_generate(g, current_node, lvl)) != bg_SUCCESS)
+            return err;
+        g->nodes++;
     }
 
     code(g,"\t/*** BG_GRAPH_GENERATE END ***/");
