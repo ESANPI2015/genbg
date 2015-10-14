@@ -6,7 +6,8 @@
 int main (int argc, char *argv[])
 {
     dictEntry *dict;
-    int i;
+    unsigned int i;
+    unsigned int replaced;
     FILE *template;
     FILE *dictionary;
     FILE *output;
@@ -58,8 +59,22 @@ int main (int argc, char *argv[])
     }
     fclose(dictionary);
 
+    if (i == 0)
+    {
+        fprintf(stderr, "Error: No entry in dictionary\n");
+        exit(EXIT_FAILURE);
+    }
+
     /*Generate output*/
-    searchAndReplaceMultiple(template, output, dict, i);
+    replaced = searchAndReplaceMultiple(template, output, dict, i);
+    if (replaced == 0)
+    {
+        fprintf(stderr, "Warning: No matching tokens found in template\n");
+    }
+    else if (replaced < i)
+    {
+        fprintf(stderr, "Warning: Unmatched tokens left\n");
+    }
     fclose(template);
     fclose(output);
     
