@@ -49,7 +49,17 @@ int main (int argc, char *argv[])
     bg_graph_alloc(&g, name);
     bg_graph_from_yaml_file(yamlfile, g);
     bg_generator_init(&gen, out, name);
-    bg_graph_generate(&gen, g, 1);
+    switch (bg_graph_generate(&gen, g, 1))
+    {
+        case bg_ERR_WRONG_TYPE:
+            fprintf(stderr, "Error: Wrong type at node %u\n", gen.nodes);
+            exit(EXIT_FAILURE);
+        case bg_ERR_NOT_IMPLEMENTED:
+            fprintf(stderr, "Error: Merge or node function at node %u not implemented\n", gen.nodes);
+            exit(EXIT_FAILURE);
+        default:
+            break;
+    }
     bg_generator_finalize(&gen);
     bg_graph_free(g);
     bg_terminate();
