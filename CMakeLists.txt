@@ -12,6 +12,7 @@ include_directories(include)
 # This is not possible without mars cmake file :/ So we have to compile this on our own
 if(NOT TARGET c_bagel)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../ext/bagle/learning/bagel/c_bagel c_bagel)
+    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../ext/bagle/learning/bagel/c_bagel/src)
 endif(NOT TARGET c_bagel)
 
 SET(ENV{PKG_CONFIG_PATH}
