@@ -14,7 +14,7 @@ void copyFile(FILE *in, FILE *out)
         fputc(c, out);
 }
 
-int readDictionary(FILE *in, dictEntry *entry)
+unsigned int readDictionary(FILE *in, dictEntry *entry)
 {
     int ret;
     char fmt[TEMPLATE_ENGINE_MAX_STRING_LENGTH];
@@ -33,23 +33,24 @@ void writeDictionary(FILE *out, const dictEntry *entry)
     fprintf(out, "%s%c%s%c",entry->token, TEMPLATE_ENGINE_DELIMITER, entry->repl, TEMPLATE_ENGINE_DELIMITER);
 }
 
-void searchAndPrefix(FILE *in, FILE *out, const char* token, char* prefix)
+unsigned int searchAndPrefix(FILE *in, FILE *out, const char* token, char* prefix)
 {
     /*add the token to the replacement*/
     strncat(prefix, token, TEMPLATE_ENGINE_MAX_STRING_LENGTH);
     /*Call SaR*/
-    searchAndReplace(in, out, token, prefix);
+    return searchAndReplace(in, out, token, prefix);
 }
 
 
-void searchAndReplaceMultiple(FILE *in, FILE *out, const dictEntry *dict, const int entries)
+unsigned int searchAndReplaceMultiple(FILE *in, FILE *out, const dictEntry *dict, const int entries)
 {
     FILE *tmp1;
     FILE *tmp2;
-    int i = 0;
+    unsigned int i = 0;
+    unsigned int replaced = 0;
 
     if (!dict)
-        return;
+        return replaced;
 
     /*Create temporary files*/
     tmp1 = tmpfile();
@@ -65,7 +66,8 @@ void searchAndReplaceMultiple(FILE *in, FILE *out, const dictEntry *dict, const 
         /*Open and truncate output file*/
         tmp2 = tmpfile();
         /*Call SaR*/
-        searchAndReplace(tmp1, tmp2, dict[i].token, dict[i].repl);
+        if (searchAndReplace(tmp1, tmp2, dict[i].token, dict[i].repl))
+            replaced++;
         /*Rewind result and close tmp1*/
         fclose(tmp1);
         rewind(tmp2);
@@ -83,16 +85,18 @@ void searchAndReplaceMultiple(FILE *in, FILE *out, const dictEntry *dict, const 
 
     /*Close temporary files*/
     fclose(tmp1);
+    return replaced;
 }
 
-void searchAndReplace(FILE *in, FILE *out, const char* token, const char* replacement)
+unsigned int searchAndReplace(FILE *in, FILE *out, const char* token, const char* replacement)
 {
     enum FSM state = FSM_SEARCH;
     int c,idx;
     long pos;
+    unsigned int replaced = 0;
 
     if (!token || !replacement)
-        return;
+        return replaced;
 
     while ((c = fgetc(in)) != EOF)
     {
@@ -122,6 +126,7 @@ void searchAndReplace(FILE *in, FILE *out, const char* token, const char* replac
                         idx++;
                     }
                     fputc(c, out);
+                    replaced++;
                     state = FSM_SEARCH;
                 }
                 else if (token[idx] != (char)c)
@@ -136,4 +141,6 @@ void searchAndReplace(FILE *in, FILE *out, const char* token, const char* replac
                 break;
         }
     }
+
+    return replaced;
 }
