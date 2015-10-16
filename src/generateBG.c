@@ -49,7 +49,7 @@ int main (int argc, char *argv[])
     bg_graph_alloc(&g, name);
     bg_graph_from_yaml_file(yamlfile, g);
     bg_generator_init(&gen, out, name);
-    switch (bg_graph_generate(&gen, g, 1))
+    switch (bg_graph_generate(&gen, g, 0))
     {
         case bg_ERR_WRONG_TYPE:
             fprintf(stderr, "Error: Wrong type at node %u\n", gen.nodes);
