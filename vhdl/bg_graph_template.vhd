@@ -38,6 +38,12 @@ end bg_graph_@name@;
 
 architecture Behavioral of bg_graph_@name@ is
 
+    signal from_external     : DATA_PORT(NO_INPUTS-1 downto 0);
+    signal from_external_req : DATA_SIGNAL(NO_INPUTS-1 downto 0);
+    signal from_external_ack : DATA_SIGNAL(NO_INPUTS-1 downto 0);
+    signal to_external     : DATA_PORT(NO_OUTPUTS-1 downto 0);
+    signal to_external_req : DATA_SIGNAL(NO_OUTPUTS-1 downto 0);
+    signal to_external_ack : DATA_SIGNAL(NO_OUTPUTS-1 downto 0);
     -- for each source
     signal from_source     : source_ports_t;
     signal from_source_req : source_signal_t;
@@ -77,6 +83,15 @@ architecture Behavioral of bg_graph_@name@ is
 
 begin
     -- connections
+    from_external <= in_port;
+    from_external_req <= in_req;
+    in_ack <= from_external_ack;
+
+    out_port <= to_external;
+    out_req  <= to_external_req;
+    to_external_ack <= out_ack;
+
+    -- Generated connections
     @connection0@
 
     -- instantiate sources
@@ -197,12 +212,12 @@ begin
                     clk => clk,
                     rst => rst,
                     halt => halt,
-                    in_port => to_unary(i),
-                    in_req => to_unary_req(i),
-                    in_ack => to_unary_ack(i),
-                    out_port => from_unary(i),
-                    out_req => from_unary_req(i),
-                    out_ack => from_unary_ack(i)
+                    in_port => to_unary(i)(0),
+                    in_req => to_unary_req(i)(0),
+                    in_ack => to_unary_ack(i)(0),
+                    out_port => from_unary(i)(0),
+                    out_req => from_unary_req(i)(0),
+                    out_ack => from_unary_ack(i)(0)
                      );
                  end generate;
         end generate;
