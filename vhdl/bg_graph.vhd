@@ -70,45 +70,71 @@ architecture Behavioral of bg_graph is
 
 begin
     -- connections
-    to_copy(0) <= in_port(0);
-    to_copy(1) <= in_port(1);
-    to_copy_req(0) <= in_req(0);
-    to_copy_req(1) <= in_req(1);
-    in_ack(0) <= to_copy_ack(0);
-    in_ack(1) <= to_copy_ack(1);
+    --to_copy(0) <= in_port(0);
+    --to_copy(1) <= in_port(1);
+    --to_copy_req(0) <= in_req(0);
+    --to_copy_req(1) <= in_req(1);
+    --in_ack(0) <= to_copy_ack(0);
+    --in_ack(1) <= to_copy_ack(1);
 
-    to_edge(0) <= from_copy(0)(0);
-    to_edge(1) <= from_copy(1)(0);
-    to_edge(2) <= from_copy(0)(1);
-    to_edge(3) <= from_copy(1)(1);
-    to_edge_req(0) <= from_copy_req(0)(0);
-    to_edge_req(1) <= from_copy_req(1)(0);
-    to_edge_req(2) <= from_copy_req(0)(1);
-    to_edge_req(3) <= from_copy_req(1)(1);
-    from_copy_ack(0)(0) <= to_edge_ack(0);
-    from_copy_ack(1)(0) <= to_edge_ack(1);
-    from_copy_ack(0)(1) <= to_edge_ack(2);
-    from_copy_ack(1)(1) <= to_edge_ack(3);
+    --to_edge(0) <= from_copy(0)(0);
+    --to_edge(1) <= from_copy(1)(0);
+    --to_edge(2) <= from_copy(0)(1);
+    --to_edge(3) <= from_copy(1)(1);
+    --to_edge_req(0) <= from_copy_req(0)(0);
+    --to_edge_req(1) <= from_copy_req(1)(0);
+    --to_edge_req(2) <= from_copy_req(0)(1);
+    --to_edge_req(3) <= from_copy_req(1)(1);
+    --from_copy_ack(0)(0) <= to_edge_ack(0);
+    --from_copy_ack(1)(0) <= to_edge_ack(1);
+    --from_copy_ack(0)(1) <= to_edge_ack(2);
+    --from_copy_ack(1)(1) <= to_edge_ack(3);
+
+    --to_merge(0)(0) <= from_edge(0);
+    --to_merge(0)(1) <= from_edge(1);
+    --to_merge(1)(0) <= from_edge(2);
+    --to_merge(1)(1) <= from_edge(3);
+    --to_merge_req(0)(0) <= from_edge_req(0);
+    --to_merge_req(0)(1) <= from_edge_req(1);
+    --to_merge_req(1)(0) <= from_edge_req(2);
+    --to_merge_req(1)(1) <= from_edge_req(3);
+    --from_edge_ack(0) <= to_merge_ack(0)(0);
+    --from_edge_ack(1) <= to_merge_ack(0)(1);
+    --from_edge_ack(2) <= to_merge_ack(1)(0);
+    --from_edge_ack(3) <= to_merge_ack(1)(1);
+
+    --out_port(0) <= from_merge(0);
+    --out_port(1) <= from_merge(1);
+    --out_req(0) <= from_merge_req(0);
+    --out_req(1) <= from_merge_req(1);
+    --from_merge_ack(0) <= out_ack(0);
+    --from_merge_ack(1) <= out_ack(1);
+    to_edge(0) <= in_port(0);
+    to_edge_req(0) <= in_req(0);
+    in_ack(0) <= to_edge_ack(0);
 
     to_merge(0)(0) <= from_edge(0);
-    to_merge(0)(1) <= from_edge(1);
-    to_merge(1)(0) <= from_edge(2);
-    to_merge(1)(1) <= from_edge(3);
     to_merge_req(0)(0) <= from_edge_req(0);
-    to_merge_req(0)(1) <= from_edge_req(1);
-    to_merge_req(1)(0) <= from_edge_req(2);
-    to_merge_req(1)(1) <= from_edge_req(3);
     from_edge_ack(0) <= to_merge_ack(0)(0);
+    to_merge(0)(1) <= from_edge(1);
+    to_merge_req(0)(1) <= from_edge_req(1);
     from_edge_ack(1) <= to_merge_ack(0)(1);
-    from_edge_ack(2) <= to_merge_ack(1)(0);
-    from_edge_ack(3) <= to_merge_ack(1)(1);
 
-    out_port(0) <= from_merge(0);
-    out_port(1) <= from_merge(1);
-    out_req(0) <= from_merge_req(0);
-    out_req(1) <= from_merge_req(1);
-    from_merge_ack(0) <= out_ack(0);
-    from_merge_ack(1) <= out_ack(1);
+    to_copy(0) <= from_merge(0);
+    to_copy_req(0) <= from_merge_req(0);
+    from_merge_ack(0) <= to_copy_ack(0);
+    
+    out_port(0) <= from_copy(0)(0);
+    out_req(0)  <= from_copy_req(0)(0);
+    from_copy_ack(0)(0) <= out_ack(0);
+
+    to_edge(1) <= from_copy(0)(1);
+    to_edge_req(1) <= from_copy_req(0)(1);
+    from_copy_ack(0)(1) <= to_edge_ack(1);
+
+    out_port(1) <= in_port(1);
+    out_req(1) <= in_req(1);
+    in_ack(1) <= out_ack(1);
 
     -- instantiate sources
     GENERATE_SOURCES : for i in NO_SOURCES-1 downto 0 generate
@@ -157,6 +183,9 @@ begin
     -- instantiate edges
     GENERATE_EDGES : for i in NO_EDGES-1 downto 0 generate
         edge : bg_edge
+        generic map (
+                        IS_BACKEDGE => EDGE_TYPES(i)
+                    )
         port map (
                 clk => clk,
                 rst => rst,
