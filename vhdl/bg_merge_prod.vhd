@@ -101,6 +101,7 @@ begin
                     fp_start <= '0';
                     fp_opa <= (others => '0');
                     fp_opb <= (others => '0');
+                    out_port <= (others => '0');
                     NodeState <= idle;
                 else
                     fp_start <= '0';
