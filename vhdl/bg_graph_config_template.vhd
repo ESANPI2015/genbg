@@ -3,6 +3,7 @@
 --
 -- Contains all necessary constants, types etc. for synthesis 
 --
+-- Instance: @name@
 -- @info@
 --
 -- Author: M. Schilling
@@ -19,14 +20,18 @@ package bg_graph_@name@_config is
     -----
     -- Important constants for instantiation
     ----
-    constant NO_INPUTS  : integer := @topLvlInputs@;
-    constant NO_OUTPUTS : integer := @topLvlOutputs@;
+    constant NO_INPUTS  : integer := @toplvlInputs@;
+    constant NO_OUTPUTS : integer := @toplvlOutputs@;
     constant NO_EDGES   : integer := @edges@;
-    constant NO_PIPES   : integer := @pipes@;
     constant NO_SOURCES : integer := @sources@;
     constant NO_SINKS   : integer := @sinks@;
     constant NO_COPIES  : integer := @copies@;
-    constant NO_MERGE   : integer := @merges@;
+    constant NO_MERGES  : integer := @merges@;
+    -- TODO: Add other unary nodes
+    constant NO_UNARY   : integer := @unaryNodes@;
+    -- TODO: Add these
+    -- constant NO_BINARY  : integer := @binaryNodes@;
+    -- constant NO_TERNARY : integer := @ternaryNodes@;
 
     -----
     -- Helper function to find the maximum in a 1D array
@@ -63,10 +68,17 @@ package bg_graph_@name@_config is
     );
 
     -----
-    -- Pipe types (replaces an edge with weight 1.0)
+    -- Unary types
     ----
-    type pipe_ports_t is array (NO_EDGES-1 downto 0) of std_logic_vector(DATA_WIDTH-1 downto 0);
-    type pipe_signals_t is array (NO_EDGES-1 downto 0) of std_logic;
+    type unary_ports_t is array (NO_UNARY-1 downto 0) of std_logic_vector(DATA_WIDTH-1 downto 0);
+    type unary_signals_t is array (NO_UNARY-1 downto 0) of std_logic;
+    type unary_type_t is (none, pipe);
+    type unary_types_t is array (NO_UNARY downto 0) of unary_type_t;
+    constant UNARY_TYPES : unary_types_t :=
+    (
+        @unaryType0@
+        others => none
+    );
 
     -----
     -- Source types and constant values (replaces a merge with no inputs)
@@ -90,42 +102,42 @@ package bg_graph_@name@_config is
     -- Merge types and constant bias
     ----
     type merge_type_t is (none, sum, prod);
-    type merge_types_t is array (NO_MERGE downto 0) of merge_type_t;
+    type merge_types_t is array (NO_MERGES downto 0) of merge_type_t;
+    type merge_bias_t is array (NO_MERGES downto 0) of std_logic_vector(DATA_WIDTH-1 downto 0);
+    type merge_output_ports_t is array(NO_MERGES-1 downto 0) of std_logic_vector(DATA_WIDTH-1 downto 0);
+    type merge_output_signals_t is array(NO_MERGES-1 downto 0) of std_logic;
     constant MERGE_TYPE : merge_types_t :=
     (
         @mergeType0@
         others => none
     );
-    type merge_bias_t is array (NO_MERGE downto 0) of std_logic_vector(DATA_WIDTH-1 downto 0);
     constant MERGE_BIAS : merge_bias_t :=
     (
         @mergeBias0@
         others => ("00000000000000000000000000000000") -- dummy
     );
-    constant MERGE_INPUTS : int_array_t(NO_MERGE downto 0) :=
+    constant MERGE_INPUTS : int_array_t(NO_MERGES downto 0) :=
     (
         @mergeInputs0@
-        others => (0) -- dummy
+        others => 0 -- dummy
     );
     -- NOTE: We need the maximum number of merge inputs to generate signals for the merges
     constant MAX_MERGE_INPUTS : integer := find_max_int(MERGE_INPUTS); -- this has to be equal to the max of the MERGE_INPUTS array
-    type merge_input_ports_t is array(NO_MERGE-1 downto 0) of DATA_PORT(MAX_MERGE_INPUTS-1 downto 0);
-    type merge_input_signals_t is array(NO_MERGE-1 downto 0) of DATA_SIGNAL(MAX_MERGE_INPUTS-1 downto 0);
-    type merge_output_ports_t is array(NO_MERGE-1 downto 0) of std_logic_vector(DATA_WIDTH-1 downto 0);
-    type merge_output_signals_t is array(NO_MERGE-1 downto 0) of std_logic;
+    type merge_input_ports_t is array(NO_MERGES-1 downto 0) of DATA_PORT(MAX_MERGE_INPUTS-1 downto 0);
+    type merge_input_signals_t is array(NO_MERGES-1 downto 0) of DATA_SIGNAL(MAX_MERGE_INPUTS-1 downto 0);
 
     -----
     -- Copy types and constant bias
     ----
+    type copy_input_ports_t is array(NO_COPIES-1 downto 0) of std_logic_vector(DATA_WIDTH-1 downto 0);
+    type copy_input_signals_t is array(NO_COPIES-1 downto 0) of std_logic;
     constant COPY_OUTPUTS : int_array_t(NO_COPIES downto 0) :=
     (
         @copyOutputs0@
-        others => (0) -- dummy
+        others => 0 -- dummy
     );
     -- NOTE: We need the maximum number of copy outputs to generate signals for the copies
     constant MAX_COPY_OUTPUTS : integer := find_max_int(COPY_OUTPUTS); -- this has to be equal to the max of the COPY_OUTPUTS array
-    type copy_input_ports_t is array(NO_COPIES-1 downto 0) of std_logic_vector(DATA_WIDTH-1 downto 0);
-    type copy_input_signals_t is array(NO_COPIES-1 downto 0) of std_logic;
     type copy_output_ports_t is array(NO_COPIES-1 downto 0) of DATA_PORT(MAX_COPY_OUTPUTS-1 downto 0);
     type copy_output_signals_t is array(NO_COPIES-1 downto 0) of DATA_SIGNAL(MAX_COPY_OUTPUTS-1 downto 0);
 end;

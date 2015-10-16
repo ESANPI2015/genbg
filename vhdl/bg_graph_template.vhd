@@ -3,6 +3,7 @@
 --
 -- Components are instantiated and wired for synthesis
 --
+-- Instance: @name@
 -- @info@
 --
 -- Author: M. Schilling
@@ -45,13 +46,6 @@ architecture Behavioral of bg_graph_@name@ is
     signal to_sink         : sink_ports_t;
     signal to_sink_req     : sink_signal_t;
     signal to_sink_ack     : sink_signal_t;
-    -- for each pipe
-    signal to_pipe         : pipe_ports_t;
-    signal to_pipe_req     : pipe_signals_t;
-    signal to_pipe_ack     : pipe_signals_t;
-    signal from_pipe       : pipe_ports_t;
-    signal from_pipe_req   : pipe_signals_t;
-    signal from_pipe_ack   : pipe_signals_t;
     -- for each edge
     signal to_edge         : edge_ports_t;
     signal to_edge_req     : edge_signals_t;
@@ -73,6 +67,13 @@ architecture Behavioral of bg_graph_@name@ is
     signal from_copy       : copy_output_ports_t;
     signal from_copy_req   : copy_output_signals_t;
     signal from_copy_ack   : copy_output_signals_t;
+    -- for each unary node
+    signal to_unary         : unary_ports_t;
+    signal to_unary_req     : unary_signals_t;
+    signal to_unary_ack     : unary_signals_t;
+    signal from_unary       : unary_ports_t;
+    signal from_unary_req   : unary_signals_t;
+    signal from_unary_ack   : unary_signals_t;
 
 begin
     -- connections
@@ -106,22 +107,6 @@ begin
                  );
         end generate;
 
-    -- instantiate pipes
-    GENERATE_PIPES : for i in NO_PIPES-1 downto 0 generate
-        pipe : bg_pipe
-        port map (
-                clk => clk,
-                rst => rst,
-                halt => halt,
-                in_port => to_pipe(i),
-                in_req => to_pipe_req(i),
-                in_ack => to_pipe_ack(i),
-                out_port => from_pipe(i),
-                out_req => from_pipe_req(i),
-                out_ack => from_pipe_ack(i)
-                 );
-        end generate;
-
     -- instantiate edges
     GENERATE_EDGES : for i in NO_EDGES-1 downto 0 generate
         edge : bg_edge
@@ -143,10 +128,10 @@ begin
         end generate;
 
     -- instantiate merges
-    GENERATE_MERGE : for i in NO_MERGE-1 downto 0 generate
+    GENERATE_MERGES : for i in NO_MERGES-1 downto 0 generate
 
         GENERATE_MERGE_SUM : if (MERGE_TYPE(i) = sum) generate
-            merge : bg_merge_sum
+            merge_sum : bg_merge_sum
             generic map (
                             NO_INPUTS => MERGE_INPUTS(i)
                         )
@@ -165,7 +150,7 @@ begin
             end generate;
 
         GENERATE_MERGE_PROD : if (MERGE_TYPE(i) = prod) generate
-            merge : bg_merge_prod
+            merge_prod : bg_merge_prod
             generic map (
                             NO_INPUTS => MERGE_INPUTS(i)
                         )
@@ -202,6 +187,24 @@ begin
                     out_req  => from_copy_req(i)(COPY_OUTPUTS(i)-1 downto 0),
                     out_ack  => from_copy_ack(i)(COPY_OUTPUTS(i)-1 downto 0)
                 );
+        end generate;
+
+    -- instantiate unary nodes
+    GENERATE_UNARY : for i in NO_UNARY-1 downto 0 generate
+        GENERATE_PIPE : if (UNARY_TYPES(i) = pipe) generate
+            pipe : bg_pipe
+            port map (
+                    clk => clk,
+                    rst => rst,
+                    halt => halt,
+                    in_port => to_unary(i),
+                    in_req => to_unary_req(i),
+                    in_ack => to_unary_ack(i),
+                    out_port => from_unary(i),
+                    out_req => from_unary_req(i),
+                    out_ack => from_unary_ack(i)
+                     );
+                 end generate;
         end generate;
 
 end Behavioral;
