@@ -7,6 +7,9 @@ use work.bg_vhdl_types.all;
 -- Add additional libraries here
 
 entity bg_edge is
+    generic (
+                IS_BACKEDGE : boolean := false
+            );
     port(
     -- Inputs
         in_port : in std_logic_vector(DATA_WIDTH-1 downto 0);
@@ -30,6 +33,7 @@ architecture Behavioral of bg_edge is
     type NodeStates is (idle, new_data, compute, data_out, sync);
     -- Add signals here
     signal NodeState : NodeStates;
+    signal InitialState : NodeStates;
 
     signal data : std_logic_vector(DATA_WIDTH-1 downto 0);
 
@@ -42,7 +46,16 @@ architecture Behavioral of bg_edge is
     signal fp_start : std_logic;
     signal fp_rdy : std_logic;
     signal fp_finished : std_logic; -- this is a flipflopped version
+    signal fp_result : std_logic_vector(DATA_WIDTH-1 downto 0);
 begin
+
+    GEN_BACK_EDGE : if (IS_BACKEDGE = true) generate
+            InitialState <= data_out;
+        end generate;
+
+    GEN_NORMAL_EDGE : if (IS_BACKEDGE = false) generate
+            InitialState <= idle;
+        end generate;
 
     -- Instantiate floating point multiplier here
     -- NOTE: if the weight is 1.0, we should replace an edge with a pipe!
@@ -52,7 +65,7 @@ begin
                 opa_i => in_weight,
                 opb_i => data,
                 rmode_i => "00", -- round to nearest even
-                output_o => out_port,
+                output_o => fp_result,
                 start_i => fp_start,
                 ready_o => fp_rdy,
                 ine_o => open,
@@ -94,8 +107,9 @@ begin
                 internal_input_ack <= '0';
                 internal_output_req <= '0';
                 data <= (others => '0');
+                out_port <= (others => '0');
                 fp_start <= '0';
-                NodeState <= idle;
+                NodeState <= InitialState;
             else
                 -- defaults
                 fp_start <= '0';
@@ -126,7 +140,7 @@ begin
                             internal_output_req <= '0';
                             -- Wait until the fp stage is ready
                             if (fp_finished = '1') then
-                                --internal_output_req <= '1'; -- Check this! See also bg_merge
+                                out_port <= fp_result;
                                 NodeState <= data_out;
                             else
                                 NodeState <= compute;

@@ -9,6 +9,9 @@ package bg_graph_components is
     -- Components of a VHDL behaviour graph
     ----
 	component bg_edge is
+        generic (
+                    IS_BACKEDGE : boolean := false
+                );
         port(
         -- Inputs
             in_port : in std_logic_vector(DATA_WIDTH-1 downto 0);

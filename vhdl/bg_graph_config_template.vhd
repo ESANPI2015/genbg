@@ -50,10 +50,16 @@ package bg_graph_@name@_config is
     type edge_ports_t is array (NO_EDGES-1 downto 0) of std_logic_vector(DATA_WIDTH-1 downto 0);
     type edge_signals_t is array (NO_EDGES-1 downto 0) of std_logic;
     type edge_weights_t is array (NO_EDGES downto 0) of std_logic_vector(DATA_WIDTH-1 downto 0);
+    type edge_types_t is array (NO_EDGES downto 0) of boolean;
     constant EDGE_WEIGHTS : edge_weights_t := 
     (
         @weight0@
         others => ("00000000000000000000000000000000") -- dummy
+    );
+    constant EDGE_TYPES : edge_types_t :=
+    (
+        @backEdge0@
+        others => false
     );
 
     -----

@@ -125,6 +125,9 @@ begin
     -- instantiate edges
     GENERATE_EDGES : for i in NO_EDGES-1 downto 0 generate
         edge : bg_edge
+        generic map (
+                        IS_BACKEDGE => EDGE_TYPES(i)
+                    )
         port map (
                 clk => clk,
                 rst => rst,
