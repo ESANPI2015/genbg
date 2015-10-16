@@ -79,9 +79,12 @@ bg_error bg_merge_generate (bg_generator_t *g, struct input_port_t *input_port, 
         switch (input_port->merge->id)
         {
             case bg_MERGE_TYPE_MEAN:
-            case bg_MERGE_TYPE_PRODUCT:
             case bg_MERGE_TYPE_SUM:
                 sprintf(line, "\tmerge[%u] += %ff;", id, input_port->defaultValue);
+                code(g, line);
+                break;
+            case bg_MERGE_TYPE_PRODUCT:
+                sprintf(line, "\tmerge[%u] *= %ff;", id, input_port->defaultValue);
                 code(g, line);
                 break;
             case bg_MERGE_TYPE_WEIGHTED_SUM:
