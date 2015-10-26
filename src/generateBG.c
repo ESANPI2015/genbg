@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include "bg_generate2.h"
+#include "bg_generate_c.h"
 
 int main (int argc, char *argv[])
 {

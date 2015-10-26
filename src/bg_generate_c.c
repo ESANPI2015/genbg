@@ -1,5 +1,5 @@
 #include "bagel.h"
-#include "bg_generate2.h"
+#include "bg_generate_c.h"
 #include "node_types/bg_node_subgraph.h"
 #include "node_list.h"
 #include <stdio.h>

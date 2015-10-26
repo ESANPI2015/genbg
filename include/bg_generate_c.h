@@ -1,5 +1,5 @@
-#ifndef _BG_GENERATE_H
-#define _BG_GENERATE_H
+#ifndef _BG_GENERATE_C_H
+#define _BG_GENERATE_C_H
 
 #include <stdio.h>
 #include "bg_impl.h"

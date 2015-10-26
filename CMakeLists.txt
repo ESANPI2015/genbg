@@ -30,7 +30,7 @@ link_directories(${genBG_PKGCONFIG_LIBRARY_DIRS})
 add_definitions(${genBG_PKGCONFIG_CFLAGS_OTHER} -ggdb)
 
 set(SOURCES_C
-    src/bg_generate2.c
+    src/bg_generate_c.c
     src/template_engine.c
     )
 set(SOURCES_VHDL
@@ -39,7 +39,7 @@ set(SOURCES_VHDL
     )
 set(HEADERS
     include/bg_generate_vhdl.h
-    include/bg_generate2.h
+    include/bg_generate_c.h
     include/template_engine.h
     )
 
