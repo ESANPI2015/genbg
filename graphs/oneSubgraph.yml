@@ -13,7 +13,7 @@ nodes:
     inputs:
       - {idx: 0, bias: 0, default: 0.0, type: 'SUM'}
       - {idx: 1, bias: 0, default: 0.0, type: 'SUM'}
-  - type: 'SIN'
+  - type: 'SQRT'
     inputs:
       - {idx: 0, bias: 0, default: 0.0, type: 'SUM'}
     id: 500
