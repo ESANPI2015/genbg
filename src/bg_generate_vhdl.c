@@ -464,7 +464,7 @@ bg_error bg_generator_finalize(bg_generator_t *generator)
     writeDictionary(generator->out, &entry);
 
     sprintf(entry.token, "@info@");
-    sprintf(entry.repl, "GENERATED: %s", ctime(&curr));
+    sprintf(entry.repl, "GENERATED: %s--", ctime(&curr));
     writeDictionary(generator->out, &entry);
 
     bg_list_deinit(generator->visited_edges);
