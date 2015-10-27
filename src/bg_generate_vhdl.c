@@ -234,6 +234,19 @@ bg_error bg_node_generate(bg_generator_t *g, bg_node_t *n, const unsigned int lv
             err = bg_graph_generate(g, ((subgraph_data_t*)n->_priv_data)->subgraph, lvl+1);
             break;
         case bg_NODE_TYPE_DIVIDE:
+            sprintf(entry.token, "@unaryType%u@", g->unaryNodes);
+            snprintf(entry.repl, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "%u => div,\n@unaryType%u@", g->unaryNodes, g->unaryNodes+1);
+            writeDictionary(g->out, &entry);
+            nodeId = g->unaryNodes++;
+            sprintf(nodeType, "unary");
+            break;
+        case bg_NODE_TYPE_SQRT:
+            sprintf(entry.token, "@unaryType%u@", g->unaryNodes);
+            snprintf(entry.repl, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "%u => sqrt,\n@unaryType%u@", g->unaryNodes, g->unaryNodes+1);
+            writeDictionary(g->out, &entry);
+            nodeId = g->unaryNodes++;
+            sprintf(nodeType, "unary");
+            break;
         case bg_NODE_TYPE_SIN:
         case bg_NODE_TYPE_COS:
         case bg_NODE_TYPE_TAN:
@@ -242,7 +255,6 @@ bg_error bg_node_generate(bg_generator_t *g, bg_node_t *n, const unsigned int lv
         case bg_NODE_TYPE_POW:
         case bg_NODE_TYPE_MOD:
         case bg_NODE_TYPE_ABS:
-        case bg_NODE_TYPE_SQRT:
         case bg_NODE_TYPE_GREATER_THAN_0:
         case bg_NODE_TYPE_EQUAL_TO_0:
         case bg_NODE_TYPE_TANH:

@@ -220,6 +220,34 @@ begin
                     out_ack => from_unary_ack(i)(0)
                      );
                  end generate;
+        GENERATE_DIV : if (UNARY_TYPES(i) = div) generate
+            div : bg_inverse
+            port map (
+                    clk => clk,
+                    rst => rst,
+                    halt => halt,
+                    in_port => to_unary(i)(0),
+                    in_req => to_unary_req(i)(0),
+                    in_ack => to_unary_ack(i)(0),
+                    out_port => from_unary(i)(0),
+                    out_req => from_unary_req(i)(0),
+                    out_ack => from_unary_ack(i)(0)
+                     );
+                 end generate;
+        GENERATE_SQRT : if (UNARY_TYPES(i) = sqrt) generate
+            sqrt : bg_sqrt
+            port map (
+                    clk => clk,
+                    rst => rst,
+                    halt => halt,
+                    in_port => to_unary(i)(0),
+                    in_req => to_unary_req(i)(0),
+                    in_ack => to_unary_ack(i)(0),
+                    out_port => from_unary(i)(0),
+                    out_req => from_unary_req(i)(0),
+                    out_ack => from_unary_ack(i)(0)
+                     );
+                 end generate;
         end generate;
 
 end Behavioral;
