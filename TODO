@@ -97,6 +97,7 @@ TODO
   + Added DIV and SQRT nodes
   - No binary or ternary nodes yet
   + Back edge detection implemented and tested. But it should not use node ids. We should use a visited nodes list!
+  NOTE: If you want dynamic weights or such you only need to write a new template :D
 
 
 * What would be nice is a bg_split and/or bg_merge functionality
