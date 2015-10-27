@@ -53,6 +53,9 @@ use work.fpupack.all;
 
 
 entity fpu_mul is
+    generic (
+            USE_PARALLEL : boolean := false
+            );
     port (
         clk_i 			: in std_logic;
 
@@ -143,8 +146,9 @@ architecture rtl of fpu_mul is
 		);
 	end component;
 	
-	constant MUL_SERIAL: integer range 0 to 1 := 0; -- 0 for parallel multiplier, 1 for serial
-	constant MUL_COUNT: integer:= 11; --11 for parallel multiplier, 34 for serial
+	--constant MUL_SERIAL: integer range 0 to 1 := 1; -- 0 for parallel multiplier, 1 for serial
+	constant MUL_COUNT_SER : integer:= 34;
+    constant MUL_COUNT_PAR : integer := 11;
 		
 	-- Input/output registers
 	signal s_opa_i, s_opb_i : std_logic_vector(FP_WIDTH-1 downto 0);
@@ -165,11 +169,6 @@ architecture rtl of fpu_mul is
 	signal pre_norm_mul_exp_10 : std_logic_vector(9 downto 0);
 	signal pre_norm_mul_fracta_24	: std_logic_vector(23 downto 0);
 	signal pre_norm_mul_fractb_24	: std_logic_vector(23 downto 0);
-	 	
-	signal mul_24_fract_48 : std_logic_vector(47 downto 0);
-	signal mul_24_sign	: std_logic;
-	signal serial_mul_fract_48 : std_logic_vector(47 downto 0);
-	signal serial_mul_sign	: std_logic;
 	
 	signal mul_fract_48: std_logic_vector(47 downto 0);
 	signal mul_sign: std_logic;
@@ -188,34 +187,72 @@ begin
 		exp_10_o => pre_norm_mul_exp_10,
 		fracta_24_o	=> pre_norm_mul_fracta_24,
 		fractb_24_o	=> pre_norm_mul_fractb_24);
-			 	
-	i_mul_24 : mul_24
-	port map(
-			 clk_i => clk_i,
-			 fracta_i => pre_norm_mul_fracta_24,
-			 fractb_i => pre_norm_mul_fractb_24,
-			 signa_i => s_opa_i(31),
-			 signb_i => s_opb_i(31),
-			 start_i => start_i,
-			 fract_o => mul_24_fract_48, 
-			 sign_o =>	mul_24_sign,
-			 ready_o => open);	
+
+    GENERATE_PAR : if (USE_PARALLEL = true) generate		 	
+        i_mul_24 : mul_24
+        port map(
+                 clk_i => clk_i,
+                 fracta_i => pre_norm_mul_fracta_24,
+                 fractb_i => pre_norm_mul_fractb_24,
+                 signa_i => s_opa_i(31),
+                 signb_i => s_opb_i(31),
+                 start_i => start_i,
+                 fract_o => mul_fract_48, 
+                 sign_o =>	mul_sign,
+                 ready_o => open);
+        -- FSM parallel
+        process(clk_i)
+        begin
+            if rising_edge(clk_i) then
+                if s_start_i ='1' then
+                    s_state <= busy;
+                    s_count <= 0;
+                elsif s_count=MUL_COUNT_PAR then
+                    s_state <= waiting;
+                    ready_o <= '1';
+                    s_count <=0;
+                elsif s_state=busy then
+                    s_count <= s_count + 1;
+                else
+                    s_state <= waiting;
+                    ready_o <= '0';
+                end if;
+        end if;	
+        end process;
+    end generate;
 			 
-	i_serial_mul : serial_mul
-	port map(
-			 clk_i => clk_i,
-			 fracta_i => pre_norm_mul_fracta_24,
-			 fractb_i => pre_norm_mul_fractb_24,
-			 signa_i => s_opa_i(31),
-			 signb_i => s_opb_i(31),
-			 start_i => s_start_i,
-			 fract_o => serial_mul_fract_48, 
-			 sign_o =>	serial_mul_sign,
-			 ready_o => open);	
-	
-	-- serial or parallel multiplier will be choosed depending on constant MUL_SERIAL
-	mul_fract_48 <= mul_24_fract_48 when MUL_SERIAL=0 else serial_mul_fract_48;
-	mul_sign <= mul_24_sign when MUL_SERIAL=0 else serial_mul_sign;
+    GENERATE_SER : if (USE_PARALLEL = false) generate		 	
+        i_serial_mul : serial_mul
+        port map(
+                 clk_i => clk_i,
+                 fracta_i => pre_norm_mul_fracta_24,
+                 fractb_i => pre_norm_mul_fractb_24,
+                 signa_i => s_opa_i(31),
+                 signb_i => s_opb_i(31),
+                 start_i => s_start_i,
+                 fract_o => mul_fract_48, 
+                 sign_o =>	mul_sign,
+                 ready_o => open);	
+        -- FSM serial
+        process(clk_i)
+        begin
+            if rising_edge(clk_i) then
+                if s_start_i ='1' then
+                    s_state <= busy;
+                    s_count <= 0;
+                elsif s_count=MUL_COUNT_SER then
+                    s_state <= waiting;
+                    ready_o <= '1';
+                    s_count <=0;
+                elsif s_state=busy then
+                    s_count <= s_count + 1;
+                else
+                    s_state <= waiting;
+                    ready_o <= '0';
+                end if;
+        end if;	
+        end process;
+    end generate;
 	
 	i_post_norm_mul : post_norm_mul
 	port map(
@@ -261,26 +298,6 @@ begin
 	end process;	
 
     
-	-- FSM
-	process(clk_i)
-	begin
-		if rising_edge(clk_i) then
-			if s_start_i ='1' then
-				s_state <= busy;
-				s_count <= 0;
-			elsif s_count=MUL_COUNT then
-				s_state <= waiting;
-				ready_o <= '1';
-				s_count <=0;
-			elsif s_state=busy then
-				s_count <= s_count + 1;
-			else
-				s_state <= waiting;
-				ready_o <= '0';
-			end if;
-	end if;	
-	end process;
-	        
     s_output1 	<= post_norm_mul_output;
     s_ine_o 		<= post_norm_mul_ine;
 	
@@ -323,6 +340,5 @@ begin
 	s_zero_o <= '1' when or_reduce(s_output1(30 downto 0))='0' else '0';
 	s_qnan_o <= '1' when s_output1(30 downto 0)=QNAN else '0';
     s_snan_o <= '1' when s_opa_i(30 downto 0)=SNAN or s_opb_i(30 downto 0)=SNAN else '0';
-
 
 end rtl;
