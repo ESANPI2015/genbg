@@ -14,6 +14,8 @@ typedef struct {
     unsigned int copies;
     unsigned int merges;
     unsigned int unaryNodes;
+    unsigned int binaryNodes;
+    unsigned int ternaryNodes;
     unsigned int connections;
     unsigned int toplvl_inputs;
     unsigned int toplvl_outputs;

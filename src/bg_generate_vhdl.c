@@ -249,9 +249,6 @@ bg_error bg_node_generate(bg_generator_t *g, bg_node_t *n, const unsigned int lv
             nodeId = g->unaryNodes++;
             sprintf(nodeType, "unary");
             break;
-        case bg_NODE_TYPE_SUBGRAPH:
-            err = bg_graph_generate(g, ((subgraph_data_t*)n->_priv_data)->subgraph, lvl+1);
-            break;
         case bg_NODE_TYPE_DIVIDE:
             sprintf(entry.token, "@unaryType%u@", g->unaryNodes);
             snprintf(entry.repl, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "%u => div,\n@unaryType%u@", g->unaryNodes, g->unaryNodes+1);
@@ -266,6 +263,16 @@ bg_error bg_node_generate(bg_generator_t *g, bg_node_t *n, const unsigned int lv
             nodeId = g->unaryNodes++;
             sprintf(nodeType, "unary");
             break;
+        case bg_NODE_TYPE_GREATER_THAN_0:
+            sprintf(entry.token, "@ternaryType%u@", g->ternaryNodes);
+            snprintf(entry.repl, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "%u => greater_than_zero,\n@ternaryType%u@", g->ternaryNodes, g->ternaryNodes+1);
+            writeDictionary(g->out, &entry);
+            nodeId = g->ternaryNodes++;
+            sprintf(nodeType, "ternary");
+            break;
+        case bg_NODE_TYPE_SUBGRAPH:
+            err = bg_graph_generate(g, ((subgraph_data_t*)n->_priv_data)->subgraph, lvl+1);
+            break;
         case bg_NODE_TYPE_SIN:
         case bg_NODE_TYPE_COS:
         case bg_NODE_TYPE_TAN:
@@ -274,7 +281,6 @@ bg_error bg_node_generate(bg_generator_t *g, bg_node_t *n, const unsigned int lv
         case bg_NODE_TYPE_POW:
         case bg_NODE_TYPE_MOD:
         case bg_NODE_TYPE_ABS:
-        case bg_NODE_TYPE_GREATER_THAN_0:
         case bg_NODE_TYPE_EQUAL_TO_0:
         case bg_NODE_TYPE_TANH:
         case bg_NODE_TYPE_FSIGMOID:
@@ -392,6 +398,8 @@ bg_error bg_generator_init(bg_generator_t *generator, FILE *fp, const char *name
     generator->copies = 0;
     generator->merges = 0;
     generator->unaryNodes = 0;
+    generator->binaryNodes = 0;
+    generator->ternaryNodes = 0;
     generator->connections = 0;
     generator->toplvl_inputs = 0;
     generator->toplvl_outputs = 0;
@@ -426,6 +434,14 @@ bg_error bg_generator_finalize(bg_generator_t *generator)
     writeDictionary(generator->out, &entry);
     /*Finalize unary section*/
     sprintf(entry.token, "@unaryType%u@", generator->unaryNodes);
+    sprintf(entry.repl, "-- DONE");
+    writeDictionary(generator->out, &entry);
+    /*Finalize binary section*/
+    sprintf(entry.token, "@binaryType%u@", generator->binaryNodes);
+    sprintf(entry.repl, "-- DONE");
+    writeDictionary(generator->out, &entry);
+    /*Finalize ternary section*/
+    sprintf(entry.token, "@ternaryType%u@", generator->ternaryNodes);
     sprintf(entry.repl, "-- DONE");
     writeDictionary(generator->out, &entry);
     /*Finalize srcValue section*/
@@ -468,6 +484,14 @@ bg_error bg_generator_finalize(bg_generator_t *generator)
 
     sprintf(entry.token, "@unaryNodes@");
     sprintf(entry.repl, "%u", generator->unaryNodes);
+    writeDictionary(generator->out, &entry);
+
+    sprintf(entry.token, "@binaryNodes@");
+    sprintf(entry.repl, "%u", generator->binaryNodes);
+    writeDictionary(generator->out, &entry);
+
+    sprintf(entry.token, "@ternaryNodes@");
+    sprintf(entry.repl, "%u", generator->ternaryNodes);
     writeDictionary(generator->out, &entry);
 
     sprintf(entry.token, "@edges@");

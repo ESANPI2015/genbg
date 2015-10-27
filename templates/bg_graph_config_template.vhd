@@ -27,11 +27,10 @@ package bg_graph_@name@_config is
     constant NO_SINKS   : integer := @sinks@;
     constant NO_COPIES  : integer := @copies@;
     constant NO_MERGES  : integer := @merges@;
-    -- TODO: Add other unary nodes
+    -- TODO: Add other nodes
     constant NO_UNARY   : integer := @unaryNodes@;
-    -- TODO: Add these
-    -- constant NO_BINARY  : integer := @binaryNodes@;
-    -- constant NO_TERNARY : integer := @ternaryNodes@;
+    constant NO_BINARY  : integer := @binaryNodes@;
+    constant NO_TERNARY : integer := @ternaryNodes@;
 
     -----
     -- Helper function to find the maximum in a 1D array
@@ -78,6 +77,21 @@ package bg_graph_@name@_config is
     constant UNARY_TYPES : unary_types_t :=
     (
         @unaryType0@
+        others => none
+    );
+
+    -----
+    -- Ternary types
+    ----
+    type ternary_input_ports_t is array (NO_TERNARY-1 downto 0) of DATA_PORT(2 downto 0);
+    type ternary_input_signals_t is array (NO_TERNARY-1 downto 0) of DATA_SIGNAL(2 downto 0);
+    type ternary_output_ports_t is array (NO_TERNARY-1 downto 0) of DATA_PORT(0 downto 0);
+    type ternary_output_signals_t is array (NO_TERNARY-1 downto 0) of DATA_SIGNAL(0 downto 0);
+    type ternary_type_t is (none, greater_than_zero);
+    type ternary_types_t is array (NO_TERNARY downto 0) of ternary_type_t;
+    constant TERNARY_TYPES : ternary_types_t :=
+    (
+        @ternaryType0@
         others => none
     );
 

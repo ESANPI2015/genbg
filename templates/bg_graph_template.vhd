@@ -80,6 +80,13 @@ architecture Behavioral of bg_graph_@name@ is
     signal from_unary       : unary_ports_t;
     signal from_unary_req   : unary_signals_t;
     signal from_unary_ack   : unary_signals_t;
+    -- for each ternary node
+    signal to_ternary         : ternary_input_ports_t;
+    signal to_ternary_req     : ternary_input_signals_t;
+    signal to_ternary_ack     : ternary_input_signals_t;
+    signal from_ternary       : ternary_output_ports_t;
+    signal from_ternary_req   : ternary_output_signals_t;
+    signal from_ternary_ack   : ternary_output_signals_t;
 
 begin
     -- connections
@@ -330,6 +337,24 @@ begin
                     out_port => from_unary(i)(0),
                     out_req => from_unary_req(i)(0),
                     out_ack => from_unary_ack(i)(0)
+                     );
+                 end generate;
+        end generate;
+
+    -- instantiate ternary nodes
+    GENERATE_TERNARY : for i in NO_TERNARY-1 downto 0 generate
+        GENERATE_GREATER_THAN_ZERO : if (TERNARY_TYPES(i) = greater_than_zero) generate
+            greater : bg_greater_than_zero
+            port map (
+                    clk => clk,
+                    rst => rst,
+                    halt => halt,
+                    in_port => to_ternary(i),
+                    in_req => to_ternary_req(i),
+                    in_ack => to_ternary_ack(i),
+                    out_port => from_ternary(i)(0),
+                    out_req => from_ternary_req(i)(0),
+                    out_ack => from_ternary_ack(i)(0)
                      );
                  end generate;
         end generate;
