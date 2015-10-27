@@ -18,6 +18,7 @@ typedef struct {
     unsigned int toplvl_inputs;
     unsigned int toplvl_outputs;
     struct bg_list_t *visited_edges;
+    struct bg_list_t *visited_nodes;
     FILE *out;
 } bg_generator_t;
 

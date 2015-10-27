@@ -174,12 +174,13 @@ bg_error bg_node_generate(bg_generator_t *g, bg_node_t *n, const unsigned int lv
 {
     dictEntry entry;
     bg_error err = bg_SUCCESS;
-    bg_list_iterator_t it;
+    bg_list_iterator_t it, it2;
     int i,j;
     unsigned int edgeId;
     int mergeId[n->input_port_cnt];
     unsigned int copyId[n->output_port_cnt];
     int suppress = 0;
+    unsigned int backedge;
     unsigned int nodeId;
     char nodeType[TEMPLATE_ENGINE_MAX_STRING_LENGTH];
 
@@ -203,9 +204,10 @@ bg_error bg_node_generate(bg_generator_t *g, bg_node_t *n, const unsigned int lv
             /*Check if edge has already been visited*/
             if (!bg_list_find(g->visited_edges, n->input_ports[i]->edges[j], &it))
             {
-                // TODO: Detect if this edge is a back edge or not
+                /*Iff the source node of an edge has not been visited yet, we have found a backedge!*/
+                backedge = bg_list_find(g->visited_nodes, n->input_ports[i]->edges[j]->source_node, &it2) ? 0 : 1;
                 /*Register edge, assign new id in increasing order*/
-                edgeId = addEdge(g, n->input_ports[i]->edges[j]->weight, 0);
+                edgeId = addEdge(g, n->input_ports[i]->edges[j]->weight, backedge);
                 n->input_ports[i]->edges[j]->id = edgeId;
                 bg_list_append(g->visited_edges, n->input_ports[i]->edges[j]);
             } else {
@@ -340,6 +342,8 @@ bg_error bg_graph_generate(bg_generator_t *g, bg_graph_t *graph, const unsigned 
     {
         if ((err = bg_node_generate(g, current_node, lvl)) != bg_SUCCESS)
             return err;
+        /*After we have generated a node we append it to the list of visited nodes. NEEDED for back edge detection!*/
+        bg_list_append(g->visited_nodes, current_node);
         g->nodes++;
     }
 
@@ -367,6 +371,7 @@ bg_error bg_generator_init(bg_generator_t *generator, FILE *fp, const char *name
     writeDictionary(generator->out, &entry);
 
     bg_list_init(&generator->visited_edges);
+    bg_list_init(&generator->visited_nodes);
     return bg_SUCCESS;
 }
 
@@ -451,6 +456,7 @@ bg_error bg_generator_finalize(bg_generator_t *generator)
     writeDictionary(generator->out, &entry);
 
     bg_list_deinit(generator->visited_edges);
+    bg_list_deinit(generator->visited_nodes);
     fflush(generator->out);
     return bg_SUCCESS;
 }
