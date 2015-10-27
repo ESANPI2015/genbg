@@ -124,26 +124,110 @@ begin
 
     -- instantiate edges
     GENERATE_EDGES : for i in NO_EDGES-1 downto 0 generate
-        edge : bg_edge
-        generic map (
-                        IS_BACKEDGE => EDGE_TYPES(i)
-                    )
-        port map (
-                clk => clk,
-                rst => rst,
-                halt => halt,
-                in_weight => EDGE_WEIGHTS(i),
-                in_port => to_edge(i),
-                in_req => to_edge_req(i),
-                in_ack => to_edge_ack(i),
-                out_port => from_edge(i),
-                out_req => from_edge_req(i),
-                out_ack => from_edge_ack(i)
-                 );
+        GENERATE_NORMAL_EDGE : if (EDGE_TYPES(i) = normal) generate
+            edge : bg_edge
+            generic map (
+                            IS_BACKEDGE => false
+                        )
+            port map (
+                    clk => clk,
+                    rst => rst,
+                    halt => halt,
+                    in_weight => EDGE_WEIGHTS(i),
+                    in_port => to_edge(i),
+                    in_req => to_edge_req(i),
+                    in_ack => to_edge_ack(i),
+                    out_port => from_edge(i),
+                    out_req => from_edge_req(i),
+                    out_ack => from_edge_ack(i)
+                     );
+             end generate;
+        GENERATE_BACK_EDGE : if (EDGE_TYPES(i) = backedge) generate
+            backedge : bg_edge
+            generic map (
+                            IS_BACKEDGE => true
+                        )
+            port map (
+                    clk => clk,
+                    rst => rst,
+                    halt => halt,
+                    in_weight => EDGE_WEIGHTS(i),
+                    in_port => to_edge(i),
+                    in_req => to_edge_req(i),
+                    in_ack => to_edge_ack(i),
+                    out_port => from_edge(i),
+                    out_req => from_edge_req(i),
+                    out_ack => from_edge_ack(i)
+                     );
+             end generate;
+        GENERATE_SIMPLE_EDGE : if (EDGE_TYPES(i) = simple) generate
+            simpleedge : bg_edge_simple
+            generic map (
+                            IS_BACKEDGE => false
+                        )
+            port map (
+                    clk => clk,
+                    rst => rst,
+                    halt => halt,
+                    in_port => to_edge(i),
+                    in_req => to_edge_req(i),
+                    in_ack => to_edge_ack(i),
+                    out_port => from_edge(i),
+                    out_req => from_edge_req(i),
+                    out_ack => from_edge_ack(i)
+                     );
+             end generate;
+        GENERATE_SIMPLE_BACKEDGE : if (EDGE_TYPES(i) = simple_backedge) generate
+            simplebackedge : bg_edge_simple
+            generic map (
+                            IS_BACKEDGE => true
+                        )
+            port map (
+                    clk => clk,
+                    rst => rst,
+                    halt => halt,
+                    in_port => to_edge(i),
+                    in_req => to_edge_req(i),
+                    in_ack => to_edge_ack(i),
+                    out_port => from_edge(i),
+                    out_req => from_edge_req(i),
+                    out_ack => from_edge_ack(i)
+                     );
+             end generate;
         end generate;
 
     -- instantiate merges
     GENERATE_MERGES : for i in NO_MERGES-1 downto 0 generate
+
+        GENERATE_MERGE_SUM_SIMPLE : if (MERGE_TYPE(i) = simple_sum) generate
+            merge_sum_simple : bg_pipe_simple
+            port map (
+                        clk => clk,
+                        rst => rst,
+                        halt => halt,
+                        in_port  => to_merge(i)(0),
+                        in_req   => to_merge_req(i)(0),
+                        in_ack   => to_merge_ack(i)(0),
+                        out_port => from_merge(i),
+                        out_req  => from_merge_req(i),
+                        out_ack  => from_merge_ack(i)
+                     );
+            end generate;
+
+        GENERATE_MERGE_PROD_SIMPLE : if (MERGE_TYPE(i) = simple_prod) generate
+            merge_prod_simple : bg_pipe_simple
+            port map (
+                        clk => clk,
+                        rst => rst,
+                        halt => halt,
+                        in_port  => to_merge(i)(0),
+                        in_req   => to_merge_req(i)(0),
+                        in_ack   => to_merge_ack(i)(0),
+                        out_port => from_merge(i),
+                        out_req  => from_merge_req(i),
+                        out_ack  => from_merge_ack(i)
+                     );
+            end generate;
 
         GENERATE_MERGE_SUM : if (MERGE_TYPE(i) = sum) generate
             merge_sum : bg_merge_sum
@@ -207,7 +291,7 @@ begin
     -- instantiate unary nodes
     GENERATE_UNARY : for i in NO_UNARY-1 downto 0 generate
         GENERATE_PIPE : if (UNARY_TYPES(i) = pipe) generate
-            pipe : bg_pipe
+            pipe : bg_pipe_simple
             port map (
                     clk => clk,
                     rst => rst,

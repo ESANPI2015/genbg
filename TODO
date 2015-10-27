@@ -89,6 +89,14 @@ TODO
   -> It might be good for both C and VHDL flavour to pass WEIGHTS to the outside world? Allows reconfiguration of behaviors (in the BG sense)
 
   II. REVIEW
+  + SUBGRAPH handling tested
+  + Optimization of edges and merges
+    * edges with weight 1.0f can be replaced by pipes
+    * merges (e.g. sum with 1 input and bias 0) can be replaced by pipes
+  - Only SUM and PRODUCT merges atm.
+  + Added DIV and SQRT nodes
+  - No binary or ternary nodes yet
+  + Back edge detection implemented and tested. But it should not use node ids. We should use a visited nodes list!
 
 
 * What would be nice is a bg_split and/or bg_merge functionality

@@ -55,7 +55,8 @@ package bg_graph_@name@_config is
     type edge_ports_t is array (NO_EDGES-1 downto 0) of std_logic_vector(DATA_WIDTH-1 downto 0);
     type edge_signals_t is array (NO_EDGES-1 downto 0) of std_logic;
     type edge_weights_t is array (NO_EDGES downto 0) of std_logic_vector(DATA_WIDTH-1 downto 0);
-    type edge_types_t is array (NO_EDGES downto 0) of boolean;
+    type edge_type_t is (simple, normal, simple_backedge, backedge); -- simple* will be replaced by bg_edge_simple
+    type edge_types_t is array (NO_EDGES downto 0) of edge_type_t;
     constant EDGE_WEIGHTS : edge_weights_t := 
     (
         @weight0@
@@ -63,8 +64,8 @@ package bg_graph_@name@_config is
     );
     constant EDGE_TYPES : edge_types_t :=
     (
-        @backEdge0@
-        others => false
+        @edgeType0@
+        others => normal
     );
 
     -----
@@ -101,7 +102,7 @@ package bg_graph_@name@_config is
     -----
     -- Merge types and constant bias
     ----
-    type merge_type_t is (none, sum, prod);
+    type merge_type_t is (none, simple_sum, sum, simple_prod, prod); -- simple* will be replaced by pipe
     type merge_types_t is array (NO_MERGES downto 0) of merge_type_t;
     type merge_bias_t is array (NO_MERGES downto 0) of std_logic_vector(DATA_WIDTH-1 downto 0);
     type merge_output_ports_t is array(NO_MERGES-1 downto 0) of std_logic_vector(DATA_WIDTH-1 downto 0);

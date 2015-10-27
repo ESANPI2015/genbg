@@ -59,7 +59,7 @@ static void addConnection(bg_generator_t *g, const char* from, const unsigned in
     g->connections++;
 }
 
-static unsigned int addEdge(bg_generator_t *g, const float weight, const int isBackedge)
+static unsigned int addEdge(bg_generator_t *g, const float weight, const unsigned int isBackedge)
 {
     dictEntry entry;
     char temp[TEMPLATE_ENGINE_MAX_STRING_LENGTH];
@@ -68,11 +68,21 @@ static unsigned int addEdge(bg_generator_t *g, const float weight, const int isB
     floatToStdLogicVec(temp, weight);
     snprintf(entry.repl, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "%u => %s, -- %ff\n@weight%u@", g->edges, temp, weight, g->edges+1);
     writeDictionary(g->out, &entry);
-    sprintf(entry.token, "@backEdge%u@", g->edges);
+    sprintf(entry.token, "@edgeType%u@", g->edges);
     if (isBackedge)
-        snprintf(entry.repl, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "%u => true,\n@backEdge%u@", g->edges, g->edges+1);
-    else
-        snprintf(entry.repl, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "@backEdge%u@", g->edges+1);
+    {
+        /*OPTIMIZATION RULE: Iff weight = 1.0f produce simple backedge*/
+        if (weight == 1.0f)
+            snprintf(entry.repl, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "%u => simple_backedge,\n@edgeType%u@", g->edges, g->edges+1);
+        else
+            snprintf(entry.repl, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "%u => backedge,\n@edgeType%u@", g->edges, g->edges+1);
+    } else {
+        /*OPTIMIZATION RULE: Iff weight = 1.0f produce simple edge*/
+        if (weight == 1.0f)
+            snprintf(entry.repl, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "%u => simple,\n@edgeType%u@", g->edges, g->edges+1);
+        else
+            snprintf(entry.repl, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "@edgeType%u@", g->edges+1);
+    }
     writeDictionary(g->out, &entry);
     return g->edges++;
 }
@@ -123,14 +133,30 @@ static int addMerge(bg_generator_t *g, const bg_merge_type type, const unsigned 
         return id;
     }
 
+    sprintf(entry.token, "@mergeBias%u@", g->merges);
+    floatToStdLogicVec(temp, bias);
+    snprintf(entry.repl, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "%u => %s, -- %ff\n@mergeBias%u@", g->merges, temp, bias, g->merges+1);
+    writeDictionary(g->out, &entry);
+    sprintf(entry.token, "@mergeInputs%u@", g->merges);
+    snprintf(entry.repl, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "%u => %u,\n@mergeInputs%u@", g->merges, inputs, g->merges+1);
+    writeDictionary(g->out, &entry);
+
     sprintf(entry.token, "@mergeType%u@", g->merges);
     switch (type)
     {
         case bg_MERGE_TYPE_SUM:
-            snprintf(entry.repl, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "%u => sum,\n@mergeType%u@", g->merges, g->merges+1);
+            /*OPTIMIZATION RULE: Iff inputs = 1 and bias = 0.0f produce simple merge*/
+            if ((inputs == 1) && (bias == 0.0f))
+                snprintf(entry.repl, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "%u => simple_sum,\n@mergeType%u@", g->merges, g->merges+1);
+            else
+                snprintf(entry.repl, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "%u => sum,\n@mergeType%u@", g->merges, g->merges+1);
             break;
         case bg_MERGE_TYPE_PRODUCT:
-            snprintf(entry.repl, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "%u => prod,\n@mergeType%u@", g->merges, g->merges+1);
+            /*OPTIMIZATION RULE: Iff inputs = 1 and bias = 1.0f produce simple merge*/
+            if ((inputs == 1) && (bias == 1.0f))
+                snprintf(entry.repl, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "%u => simple_prod,\n@mergeType%u@", g->merges, g->merges+1);
+            else
+                snprintf(entry.repl, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "%u => prod,\n@mergeType%u@", g->merges, g->merges+1);
             break;
         case bg_MERGE_TYPE_MAX:
         case bg_MERGE_TYPE_MIN:
@@ -141,13 +167,6 @@ static int addMerge(bg_generator_t *g, const bg_merge_type type, const unsigned 
         default:
             return id;
     }
-    writeDictionary(g->out, &entry);
-    sprintf(entry.token, "@mergeBias%u@", g->merges);
-    floatToStdLogicVec(temp, bias);
-    snprintf(entry.repl, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "%u => %s, -- %ff\n@mergeBias%u@", g->merges, temp, bias, g->merges+1);
-    writeDictionary(g->out, &entry);
-    sprintf(entry.token, "@mergeInputs%u@", g->merges);
-    snprintf(entry.repl, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "%u => %u,\n@mergeInputs%u@", g->merges, inputs, g->merges+1);
     writeDictionary(g->out, &entry);
 
     return g->merges++;
@@ -402,7 +421,7 @@ bg_error bg_generator_finalize(bg_generator_t *generator)
     sprintf(entry.repl, "-- DONE");
     writeDictionary(generator->out, &entry);
     /*Finalize edgeType section*/
-    sprintf(entry.token, "@backEdge%u@", generator->edges);
+    sprintf(entry.token, "@edgeType%u@", generator->edges);
     sprintf(entry.repl, "-- DONE");
     writeDictionary(generator->out, &entry);
     /*Finalize unary section*/
