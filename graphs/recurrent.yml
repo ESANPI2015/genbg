@@ -1,0 +1,17 @@
+edges:
+- {fromNodeId: 8, fromNodeOutputIdx: 0, toNodeId: 14, toNodeInputIdx: 0, weight: 1}
+- {fromNodeId: 2, fromNodeOutputIdx: 0, toNodeId: 8, toNodeInputIdx: 0, weight: 1}
+- {fromNodeId: 8, fromNodeOutputIdx: 0, toNodeId: 8, toNodeInputIdx: 0, weight: 1}
+nodes:
+- id: 14
+  inputs:
+  - {idx: 0, bias: 0, default: 0.0, type: 'SUM'}
+  type: 'OUTPUT'
+- id: 8
+  inputs:
+  - {idx: 0, bias: 0, default: 0.0, type: 'SUM'}
+  type: 'PIPE'
+- id: 2
+  inputs:
+  - {idx: 0, bias: 0, default: 0.0, type: 'SUM'}
+  type: 'INPUT'
