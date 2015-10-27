@@ -2,19 +2,19 @@ TODO
 
 * Use bagle library ... Embed this into the toolchain DONE
 * Include sources and headers from bagle library DONE
-* Find a library for floatToFixed and fixedToFloat conversion
+* Find a library for floatToFixed and fixedToFloat conversion NOT DONE: vhdl uses floating point
 
 * As and alternative to bg_evaluate we introduce DONE
   bg_generate(graph, output file name, flavour)
 
   This function should do the following:
   If the flavour is 'C':
-  - create a header file
+  - create a header file DONE
   - create a source file DONE
-  - insert I/O wrappers in header and source file (for EXTERNAL I/O)
+  - insert I/O wrappers in header and source file (for EXTERNAL I/O) NOT DONE: Function call with input and output parameters
     * bool input (id, *value)
     * bool output (id, value)
-  - traverse the given graph in evaluation order (original bagle order)
+  - traverse the given graph in evaluation order (original bagle order) DONE
     * produce input statements for each input node
       for every input node i
 	      success = false
@@ -73,7 +73,22 @@ TODO
 
   If the flavour is 'VHDL':
   (Now the real work begins)
-  - NOTE: Use some of the stuff from PicoBlazeArray project!
+  - Create a config file DONE
+  - Create an entity DONE
+  - Use GENERATE statements to produce edges and nodes etc. DONE
+
+  I. REVIEW
+  + First version can handle simpleTest.yml
+  + Produces working config and entity files
+  - SUBGRAPH handling untested
+  - No optimizations yet (e.g. edges with weight 1.0f can be pipes)
+  + Uses the same template engine
+  - Only SUM and PRODUCT merges atm
+  - Only PIPE node atm
+  - back edge detection is missing
+  -> It might be good for both C and VHDL flavour to pass WEIGHTS to the outside world? Allows reconfiguration of behaviors (in the BG sense)
+
+  II. REVIEW
 
 
 * What would be nice is a bg_split and/or bg_merge functionality
