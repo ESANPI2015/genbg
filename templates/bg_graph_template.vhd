@@ -357,6 +357,21 @@ begin
                     out_ack => from_ternary_ack(i)(0)
                      );
                  end generate;
+        GENERATE_LESS_THAN_EPSILON : if (TERNARY_TYPES(i) = less_than_epsilon) generate
+            less : bg_less_than_epsilon
+            port map (
+                    clk => clk,
+                    rst => rst,
+                    halt => halt,
+                    in_port => to_ternary(i),
+                    in_req => to_ternary_req(i),
+                    in_ack => to_ternary_ack(i),
+                    in_epsilon => EPSILON,
+                    out_port => from_ternary(i)(0),
+                    out_req => from_ternary_req(i)(0),
+                    out_ack => from_ternary_ack(i)(0)
+                     );
+                 end generate;
         end generate;
 
 end Behavioral;

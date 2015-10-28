@@ -88,7 +88,7 @@ package bg_graph_@name@_config is
     type ternary_input_signals_t is array (NO_TERNARY-1 downto 0) of DATA_SIGNAL(2 downto 0);
     type ternary_output_ports_t is array (NO_TERNARY-1 downto 0) of DATA_PORT(0 downto 0);
     type ternary_output_signals_t is array (NO_TERNARY-1 downto 0) of DATA_SIGNAL(0 downto 0);
-    type ternary_type_t is (none, greater_than_zero);
+    type ternary_type_t is (none, greater_than_zero, less_than_epsilon);
     type ternary_types_t is array (NO_TERNARY downto 0) of ternary_type_t;
     constant TERNARY_TYPES : ternary_types_t :=
     (
