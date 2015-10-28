@@ -31,6 +31,7 @@ package bg_graph_@name@_config is
     constant NO_UNARY   : integer := @unaryNodes@;
     constant NO_BINARY  : integer := @binaryNodes@;
     constant NO_TERNARY : integer := @ternaryNodes@;
+    constant EPSILON : std_logic_vector(DATA_WIDTH-1 downto 0) := @epsilon@;
 
     -----
     -- Helper function to find the maximum in a 1D array
