@@ -80,6 +80,13 @@ architecture Behavioral of bg_graph_@name@ is
     signal from_unary       : unary_ports_t;
     signal from_unary_req   : unary_signals_t;
     signal from_unary_ack   : unary_signals_t;
+    -- for each binary node
+    signal to_binary         : binary_input_ports_t;
+    signal to_binary_req     : binary_input_signals_t;
+    signal to_binary_ack     : binary_input_signals_t;
+    signal from_binary       : binary_output_ports_t;
+    signal from_binary_req   : binary_output_signals_t;
+    signal from_binary_ack   : binary_output_signals_t;
     -- for each ternary node
     signal to_ternary         : ternary_input_ports_t;
     signal to_ternary_req     : ternary_input_signals_t;
@@ -351,6 +358,24 @@ begin
                     out_port => from_unary(i)(0),
                     out_req => from_unary_req(i)(0),
                     out_ack => from_unary_ack(i)(0)
+                     );
+                 end generate;
+        end generate;
+
+    -- instantiate binary nodes
+    GENERATE_BINARY : for i in NO_BINARY-1 downto 0 generate
+        GENERATE_FMOD : if (BINARY_TYPES(i) = fmod) generate
+            fmod : bg_fmod
+            port map (
+                    clk => clk,
+                    rst => rst,
+                    halt => halt,
+                    in_port => to_binary(i),
+                    in_req => to_binary_req(i),
+                    in_ack => to_binary_ack(i),
+                    out_port => from_binary(i)(0),
+                    out_req => from_binary_req(i)(0),
+                    out_ack => from_binary_ack(i)(0)
                      );
                  end generate;
         end generate;

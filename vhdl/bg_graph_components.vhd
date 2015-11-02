@@ -264,4 +264,22 @@ package bg_graph_components is
             clk : in std_logic
             );
     end component;
+
+    component bg_fmod is
+        port(
+        -- Inputs
+            in_port : in DATA_PORT(1 downto 0);
+            in_req : in DATA_SIGNAL(1 downto 0);
+            in_ack : out DATA_SIGNAL(1 downto 0);
+        -- Outputs
+            out_port : out std_logic_vector(DATA_WIDTH-1 downto 0);
+            out_req : out std_logic;
+            out_ack : in std_logic;
+        -- Other signals
+            halt : in std_logic;
+            rst : in std_logic;
+            clk : in std_logic
+            );
+    end component;
+
 end;
