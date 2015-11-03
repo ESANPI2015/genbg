@@ -39,12 +39,14 @@ architecture Behavioral of bg_fmod is
     -- FP stuff
     signal fp_opa : std_logic_vector(DATA_WIDTH-1 downto 0);
     signal fp_opb : std_logic_vector(DATA_WIDTH-1 downto 0);
-    signal fp_div_to_mul : std_logic_vector(DATA_WIDTH-1 downto 0);
+    signal fp_div_to_trunc : std_logic_vector(DATA_WIDTH-1 downto 0);
+    signal fp_trunc_to_mul : std_logic_vector(DATA_WIDTH-1 downto 0);
     signal fp_mul_to_sub : std_logic_vector(DATA_WIDTH-1 downto 0);
     signal fp_result : std_logic_vector(DATA_WIDTH-1 downto 0);
 
     signal fp_start : std_logic;
-    signal fp_start_div_to_mul : std_logic;
+    signal fp_start_div_to_trunc : std_logic;
+    signal fp_start_trunc_to_mul : std_logic;
     signal fp_start_mul_to_sub : std_logic;
     signal fp_rdy : std_logic;
     signal fp_finished : std_logic; -- this is a flipflopped version
@@ -55,9 +57,6 @@ begin
     out_req <= internal_output_req;
     internal_output_ack <= out_ack;
 
-    fp_opa <= in_port(0);
-    fp_opb <= in_port(1);
-
     -- The following stages calculate f = x - y * round_to_zero(x/y)
     -- This is the behaviour of fmodf
     fp_div : entity work.fpu_div(rtl)
@@ -65,10 +64,26 @@ begin
                     clk_i => clk,
                     opa_i => fp_opa,
                     opb_i => fp_opb,
-                    rmode_i => "01", -- round to ZERO !
-                    output_o => fp_div_to_mul,
+                    rmode_i => "01", -- use round to zero at div as well :)
+                    output_o => fp_div_to_trunc,
                     start_i => fp_start,
-                    ready_o => fp_start_div_to_mul,
+                    ready_o => fp_start_div_to_trunc,
+                    ine_o => open,
+                    overflow_o => open,
+                    underflow_o => open,
+                    div_zero_o => open,
+                    inf_o => open,
+                    zero_o => open,
+                    qnan_o => open,
+                    snan_o => open
+                 );
+    fp_trunc : entity work.fpu_trunc(rtl)
+        port map (
+                    clk_i => clk,
+                    opa_i => fp_div_to_trunc,
+                    output_o => fp_trunc_to_mul,
+                    start_i => fp_start_div_to_trunc,
+                    ready_o => fp_start_trunc_to_mul,
                     ine_o => open,
                     overflow_o => open,
                     underflow_o => open,
@@ -82,11 +97,11 @@ begin
     fp_mul : entity work.fpu_mul(rtl)
         port map (
                     clk_i => clk,
-                    opa_i => fp_start_div_to_mul,
+                    opa_i => fp_trunc_to_mul,
                     opb_i => fp_opb,
                     rmode_i => "00", -- round to nearest even
                     output_o => fp_mul_to_sub,
-                    start_i => fp_start_div_to_mul,
+                    start_i => fp_start_trunc_to_mul,
                     ready_o => fp_start_mul_to_sub,
                     ine_o => open,
                     overflow_o => open,
@@ -141,6 +156,8 @@ begin
                 internal_input_ack <= '0';
                 internal_output_req <= '0';
                 fp_start <= '0';
+                fp_opa <= (others => '0');
+                fp_opb <= (others => '0');
                 out_port <= (others => '0');
                 NodeState <= idle;
             else
@@ -152,8 +169,10 @@ begin
                             internal_input_ack <= '0';
                             internal_output_req <= '0';
                             if ((internal_input_req = '1') and (fp_finished = '1')) then
-                                internal_input_ack <= '1';
+                                fp_opa <= in_port(0);
+                                fp_opb <= in_port(1);
                                 fp_start <= '1';
+                                internal_input_ack <= '1';
                                 NodeState <= new_data;
                             else
                                 NodeState <= idle;
