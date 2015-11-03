@@ -428,7 +428,7 @@ bg_error bg_generator_init(bg_generator_t *generator, FILE *fp, const char *name
     writeDictionary(generator->out, &entry);
 
     floatToStdLogicVec(entry.token, bg_EPSILON);
-    sprintf(entry.repl, "%s -- %ff", entry.token, bg_EPSILON);
+    sprintf(entry.repl, "%s; -- %ff", entry.token, bg_EPSILON);
     sprintf(entry.token, "@epsilon@");
     writeDictionary(generator->out, &entry);
 

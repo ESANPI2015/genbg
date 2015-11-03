@@ -70,7 +70,7 @@ begin
                             internal_input_ack <= '0';
                             internal_output_req <= '0';
                             if (internal_input_req = '1') then
-                                if (less_than_espilon = '1') then
+                                if (less_than_epsilon = '1') then
                                     out_port <= in_port(1);
                                 else
                                     out_port <= in_port(2);
