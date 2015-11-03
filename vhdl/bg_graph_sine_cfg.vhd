@@ -3,8 +3,9 @@
 --
 -- Contains all necessary constants, types etc. for synthesis 
 --
--- Instance: @name@
--- @info@
+-- Instance: sine
+-- GENERATED: Tue Nov  3 17:31:47 2015
+--
 --
 -- Author: M. Schilling
 -- Date: 2015/10/14
@@ -15,23 +16,23 @@ use IEEE.STD_LOGIC_1164.ALL;
 library work;
 use work.bg_vhdl_types.all;
 
-package bg_graph_@name@_config is
+package bg_graph_sine_config is
 
     -----
     -- Important constants for instantiation
     ----
-    constant NO_INPUTS  : integer := @toplvlInputs@;
-    constant NO_OUTPUTS : integer := @toplvlOutputs@;
-    constant NO_EDGES   : integer := @edges@;
-    constant NO_SOURCES : integer := @sources@;
-    constant NO_SINKS   : integer := @sinks@;
-    constant NO_COPIES  : integer := @copies@;
-    constant NO_MERGES  : integer := @merges@;
+    constant NO_INPUTS  : integer := 1;
+    constant NO_OUTPUTS : integer := 1;
+    constant NO_EDGES   : integer := 45;
+    constant NO_SOURCES : integer := 1;
+    constant NO_SINKS   : integer := 0;
+    constant NO_COPIES  : integer := 31;
+    constant NO_MERGES  : integer := 37;
     -- TODO: Add other nodes
-    constant NO_UNARY   : integer := @unaryNodes@;
-    constant NO_BINARY  : integer := @binaryNodes@;
-    constant NO_TERNARY : integer := @ternaryNodes@;
-    constant EPSILON : std_logic_vector(DATA_WIDTH-1 downto 0) := @epsilon@;
+    constant NO_UNARY   : integer := 28;
+    constant NO_BINARY  : integer := 1;
+    constant NO_TERNARY : integer := 3;
+    constant EPSILON : std_logic_vector(DATA_WIDTH-1 downto 0) := x"358637bd"; -- 0.000001f;
 
     -----
     -- Helper function to find the maximum in a 1D array
@@ -59,12 +60,98 @@ package bg_graph_@name@_config is
     type edge_types_t is array (NO_EDGES downto 0) of edge_type_t;
     constant EDGE_WEIGHTS : edge_weights_t := 
     (
-        @weight0@
+        0 => x"3f800000", -- 1.000000f
+1 => x"3f800000", -- 1.000000f
+2 => x"3f800000", -- 1.000000f
+3 => x"3f800000", -- 1.000000f
+4 => x"bf800000", -- -1.000000f
+5 => x"3f800000", -- 1.000000f
+6 => x"bf800000", -- -1.000000f
+7 => x"3f800000", -- 1.000000f
+8 => x"3f800000", -- 1.000000f
+9 => x"3f800000", -- 1.000000f
+10 => x"3f800000", -- 1.000000f
+11 => x"3f800000", -- 1.000000f
+12 => x"3f800000", -- 1.000000f
+13 => x"3f800000", -- 1.000000f
+14 => x"3f800000", -- 1.000000f
+15 => x"3f800000", -- 1.000000f
+16 => x"3f800000", -- 1.000000f
+17 => x"3f800000", -- 1.000000f
+18 => x"3f800000", -- 1.000000f
+19 => x"3f800000", -- 1.000000f
+20 => x"3f800000", -- 1.000000f
+21 => x"3f800000", -- 1.000000f
+22 => x"3f800000", -- 1.000000f
+23 => x"3f800000", -- 1.000000f
+24 => x"3f800000", -- 1.000000f
+25 => x"bf800000", -- -1.000000f
+26 => x"3f800000", -- 1.000000f
+27 => x"3f800000", -- 1.000000f
+28 => x"3f800000", -- 1.000000f
+29 => x"3f800000", -- 1.000000f
+30 => x"3f800000", -- 1.000000f
+31 => x"3f800000", -- 1.000000f
+32 => x"3f800000", -- 1.000000f
+33 => x"bf800000", -- -1.000000f
+34 => x"3f800000", -- 1.000000f
+35 => x"3f800000", -- 1.000000f
+36 => x"3f800000", -- 1.000000f
+37 => x"3f800000", -- 1.000000f
+38 => x"3f800000", -- 1.000000f
+39 => x"3f800000", -- 1.000000f
+40 => x"3f800000", -- 1.000000f
+41 => x"3f800000", -- 1.000000f
+42 => x"3f800000", -- 1.000000f
+43 => x"3f800000", -- 1.000000f
+44 => x"3f800000", -- 1.000000f
+-- DONE
         others => ("00000000000000000000000000000000") -- dummy
     );
     constant EDGE_TYPES : edge_types_t :=
     (
-        @edgeType0@
+        0 => simple,
+1 => simple,
+2 => simple,
+3 => simple,
+5 => simple,
+7 => simple,
+8 => simple,
+9 => simple,
+10 => simple,
+11 => simple,
+12 => simple,
+13 => simple,
+14 => simple,
+15 => simple,
+16 => simple,
+17 => simple,
+18 => simple,
+19 => simple,
+20 => simple,
+21 => simple,
+22 => simple,
+23 => simple,
+24 => simple,
+26 => simple,
+27 => simple,
+28 => simple,
+29 => simple,
+30 => simple,
+31 => simple,
+32 => simple,
+34 => simple,
+35 => simple,
+36 => simple,
+37 => simple,
+38 => simple,
+39 => simple,
+40 => simple,
+41 => simple,
+42 => simple,
+43 => simple,
+44 => simple,
+-- DONE
         others => normal
     );
 
@@ -73,11 +160,39 @@ package bg_graph_@name@_config is
     ----
     type unary_ports_t is array (NO_UNARY-1 downto 0) of DATA_PORT(0 downto 0);
     type unary_signals_t is array (NO_UNARY-1 downto 0) of DATA_SIGNAL(0 downto 0);
-    type unary_type_t is (none, pipe, div, sqrt, absolute, sine);
+    type unary_type_t is (none, pipe, div, sqrt, absolute);
     type unary_types_t is array (NO_UNARY downto 0) of unary_type_t;
     constant UNARY_TYPES : unary_types_t :=
     (
-        @unaryType0@
+        0 => pipe,
+1 => pipe,
+2 => pipe,
+3 => pipe,
+4 => pipe,
+5 => pipe,
+6 => pipe,
+7 => pipe,
+8 => pipe,
+9 => pipe,
+10 => pipe,
+11 => pipe,
+12 => pipe,
+13 => pipe,
+14 => pipe,
+15 => pipe,
+16 => pipe,
+17 => pipe,
+18 => pipe,
+19 => pipe,
+20 => pipe,
+21 => pipe,
+22 => pipe,
+23 => pipe,
+24 => pipe,
+25 => pipe,
+26 => pipe,
+27 => pipe,
+-- DONE
         others => none
     );
 
@@ -92,7 +207,8 @@ package bg_graph_@name@_config is
     type binary_types_t is array (NO_BINARY downto 0) of binary_type_t;
     constant BINARY_TYPES : binary_types_t :=
     (
-        @binaryType0@
+        0 => fmod,
+-- DONE
         others => none
     );
 
@@ -107,7 +223,10 @@ package bg_graph_@name@_config is
     type ternary_types_t is array (NO_TERNARY downto 0) of ternary_type_t;
     constant TERNARY_TYPES : ternary_types_t :=
     (
-        @ternaryType0@
+        0 => greater_than_zero,
+1 => greater_than_zero,
+2 => greater_than_zero,
+-- DONE
         others => none
     );
 
@@ -119,7 +238,8 @@ package bg_graph_@name@_config is
     type source_values_t is array (NO_SOURCES downto 0) of std_logic_vector(DATA_WIDTH-1 downto 0);
     constant SOURCE_VALUES : source_values_t :=
     (
-        @srcValue0@
+        0 => x"40c90fdb", -- 6.283185f
+-- DONE
         others => ("00000000000000000000000000000000") -- dummy
     );
 
@@ -139,17 +259,128 @@ package bg_graph_@name@_config is
     type merge_output_signals_t is array(NO_MERGES-1 downto 0) of std_logic;
     constant MERGE_TYPE : merge_types_t :=
     (
-        @mergeType0@
+        0 => simple_sum,
+1 => simple_sum,
+2 => prod,
+3 => sum,
+4 => prod,
+5 => prod,
+6 => sum,
+7 => prod,
+8 => sum,
+9 => sum,
+10 => prod,
+11 => prod,
+12 => sum,
+13 => prod,
+14 => sum,
+15 => sum,
+16 => prod,
+17 => prod,
+18 => sum,
+19 => prod,
+20 => sum,
+21 => simple_sum,
+22 => prod,
+23 => prod,
+24 => sum,
+25 => prod,
+26 => sum,
+27 => sum,
+28 => prod,
+29 => simple_sum,
+30 => sum,
+31 => prod,
+32 => simple_sum,
+33 => sum,
+34 => simple_sum,
+35 => simple_sum,
+36 => simple_sum,
+-- DONE
         others => none
     );
     constant MERGE_BIAS : merge_bias_t :=
     (
-        @mergeBias0@
+        0 => x"00000000", -- 0.000000f
+1 => x"00000000", -- 0.000000f
+2 => x"3f22f983", -- 0.636620f
+3 => x"40800000", -- 4.000000f
+4 => x"3f800000", -- 1.000000f
+5 => x"be5bc095", -- -0.214602f
+6 => x"3f9b7813", -- 1.214602f
+7 => x"bf800000", -- -1.000000f
+8 => x"3f800000", -- 1.000000f
+9 => x"c0000000", -- -2.000000f
+10 => x"3f800000", -- 1.000000f
+11 => x"be5bc095", -- -0.214602f
+12 => x"3f9b7813", -- 1.214602f
+13 => x"bf800000", -- -1.000000f
+14 => x"3f800000", -- 1.000000f
+15 => x"40000000", -- 2.000000f
+16 => x"3f800000", -- 1.000000f
+17 => x"be5bc095", -- -0.214602f
+18 => x"3f9b7813", -- 1.214602f
+19 => x"bf800000", -- -1.000000f
+20 => x"3f800000", -- 1.000000f
+21 => x"00000000", -- 0.000000f
+22 => x"3f800000", -- 1.000000f
+23 => x"be5bc095", -- -0.214602f
+24 => x"3f9b7813", -- 1.214602f
+25 => x"bf800000", -- -1.000000f
+26 => x"3f800000", -- 1.000000f
+27 => x"bf800000", -- -1.000000f
+28 => x"bf800000", -- -1.000000f
+29 => x"00000000", -- 0.000000f
+30 => x"c0000000", -- -2.000000f
+31 => x"bf800000", -- -1.000000f
+32 => x"00000000", -- 0.000000f
+33 => x"c0400000", -- -3.000000f
+34 => x"00000000", -- 0.000000f
+35 => x"00000000", -- 0.000000f
+36 => x"00000000", -- 0.000000f
+-- DONE
         others => ("00000000000000000000000000000000") -- dummy
     );
     constant MERGE_INPUTS : int_array_t(NO_MERGES downto 0) :=
     (
-        @mergeInputs0@
+        0 => 1,
+1 => 1,
+2 => 1,
+3 => 1,
+4 => 2,
+5 => 1,
+6 => 1,
+7 => 2,
+8 => 1,
+9 => 1,
+10 => 2,
+11 => 1,
+12 => 1,
+13 => 2,
+14 => 1,
+15 => 1,
+16 => 2,
+17 => 1,
+18 => 1,
+19 => 2,
+20 => 1,
+21 => 1,
+22 => 2,
+23 => 1,
+24 => 1,
+25 => 2,
+26 => 1,
+27 => 1,
+28 => 1,
+29 => 1,
+30 => 1,
+31 => 1,
+32 => 1,
+33 => 1,
+34 => 1,
+35 => 1,
+36 => 1,
+-- DONE
         others => 0 -- dummy
     );
     -- NOTE: We need the maximum number of merge inputs to generate signals for the merges
@@ -164,7 +395,38 @@ package bg_graph_@name@_config is
     type copy_input_signals_t is array(NO_COPIES-1 downto 0) of std_logic;
     constant COPY_OUTPUTS : int_array_t(NO_COPIES downto 0) :=
     (
-        @copyOutputs0@
+        0 => 1,
+1 => 1,
+2 => 1,
+3 => 7,
+4 => 2,
+5 => 2,
+6 => 1,
+7 => 1,
+8 => 1,
+9 => 1,
+10 => 2,
+11 => 2,
+12 => 1,
+13 => 1,
+14 => 1,
+15 => 1,
+16 => 2,
+17 => 2,
+18 => 1,
+19 => 1,
+20 => 1,
+21 => 1,
+22 => 2,
+23 => 2,
+24 => 1,
+25 => 1,
+26 => 1,
+27 => 1,
+28 => 1,
+29 => 1,
+30 => 1,
+-- DONE
         others => 0 -- dummy
     );
     -- NOTE: We need the maximum number of copy outputs to generate signals for the copies
