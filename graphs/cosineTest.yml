@@ -10,7 +10,7 @@ nodes:
   - id: 2
     inputs:
       - {idx: 0, bias: 0, default: 0.0, type: 'SUM'}
-    type: 'SIN'
+    type: 'COS'
   - id: 1
     inputs:
       - {idx: 0, bias: 0, default: 0.0, type: 'SUM'}

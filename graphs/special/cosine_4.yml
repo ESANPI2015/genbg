@@ -1,0 +1,49 @@
+# This is a fourth order approx. of the cosine between (0 and pi/2)
+# cos(z) = 1 - b * z^2 + c * z^4
+# z has to be normalized (1 = pi/2) and in range [0,1] 
+# For convenience both the result and its negation is passed
+edges:
+- {fromNodeId: 1, fromNodeOutputIdx: 0, toNodeId: 4, toNodeInputIdx: 0, weight: 1}
+- {fromNodeId: 1, fromNodeOutputIdx: 0, toNodeId: 4, toNodeInputIdx: 0, weight: 1}
+- {fromNodeId: 4, fromNodeOutputIdx: 0, toNodeId: 3, toNodeInputIdx: 0, weight: 1}
+- {fromNodeId: 4, fromNodeOutputIdx: 0, toNodeId: 3, toNodeInputIdx: 0, weight: 1}
+- {fromNodeId: 4, fromNodeOutputIdx: 0, toNodeId: 6, toNodeInputIdx: 0, weight: 1}
+- {fromNodeId: 3, fromNodeOutputIdx: 0, toNodeId: 6, toNodeInputIdx: 0, weight: 1}
+
+- {fromNodeId: 6, fromNodeOutputIdx: 0, toNodeId: 7, toNodeInputIdx: 0, weight: 1}
+- {fromNodeId: 6, fromNodeOutputIdx: 0, toNodeId: 9, toNodeInputIdx: 0, weight: 1}
+- {fromNodeId: 7, fromNodeOutputIdx: 0, toNodeId: 8, toNodeInputIdx: 0, weight: 1}
+nodes:
+- id: 1
+  inputs:
+  - {idx: 0, bias: 0, default: 0.0, type: 'SUM'}
+  type: 'INPUT'
+# b * z^2
+- id: 4
+  inputs:
+  - {idx: 0, bias: 1.225351707, default: 0.0, type: 'PRODUCT'}
+  type: 'PIPE'
+# (b * z^2)^2 / b^2 * -c = -c * z^4
+- id: 3
+  inputs:
+  - {idx: 0, bias: -0.150085706, default: 0.0, type: 'PRODUCT'}
+  type: 'PIPE'
+# -1 + b * z^2 - c * z^4 = -cos(z)
+- id: 6
+  inputs:
+  - {idx: 0, bias: -1.0, default: 0.0, type: 'SUM'}
+  type: 'PIPE'
+# cos(z)
+- id: 7
+  inputs:
+  - {idx: 0, bias: 0.0, default: 0.0, type: 'SUM'}
+  type: 'ABS'
+
+- id: 8
+  inputs:
+  - {idx: 0, bias: 0.0, default: 0.0, type: 'SUM'}
+  type: 'OUTPUT'
+- id: 9
+  inputs:
+  - {idx: 0, bias: 0.0, default: 0.0, type: 'SUM'}
+  type: 'OUTPUT'

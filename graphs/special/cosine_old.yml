@@ -26,27 +26,27 @@ nodes:
   inputs:
   - {idx: 0, bias: 0, default: 0.0, type: 'SUM'}
   type: 'SUBGRAPH'
-  subgraph_name: 'graphs/presinus.yml'
+  subgraph_name: 'graphs/normalize.yml'
 - id: 3
   inputs:
   - {idx: 0, bias: 0, default: 0.0, type: 'SUM'}
   type: 'SUBGRAPH'
-  subgraph_name: 'graphs/sine_4.yml'
+  subgraph_name: 'graphs/cosine_4.yml'
 - id: 4
   inputs:
   - {idx: 0, bias: 2.0, default: 0.0, type: 'SUM'}
   type: 'SUBGRAPH'
-  subgraph_name: 'graphs/sine_4.yml'
+  subgraph_name: 'graphs/cosine_4.yml'
 - id: 5
   inputs:
   - {idx: 0, bias: -2.0, default: 0.0, type: 'SUM'}
   type: 'SUBGRAPH'
-  subgraph_name: 'graphs/sine_4.yml'
+  subgraph_name: 'graphs/cosine_4.yml'
 - id: 6
   inputs:
   - {idx: 0, bias: 4.0, default: 0.0, type: 'SUM'}
   type: 'SUBGRAPH'
-  subgraph_name: 'graphs/sine_4.yml'
+  subgraph_name: 'graphs/cosine_4.yml'
 - id: 7
   inputs:
   - {idx: 0, bias: -3.0, default: 0.0, type: 'SUM'}

@@ -1,3 +1,6 @@
+# This is a fourth order approx. of the cosine between (0 and pi/2)
+# cos(z) = 1 - z^2 * ( b - c * z^2)
+# z has to be normalized (1 = pi/2) and in range [0,1] 
 edges:
 - {fromNodeId: 1, fromNodeOutputIdx: 0, toNodeId: 2, toNodeInputIdx: 0, weight: 1}
 - {fromNodeId: 1, fromNodeOutputIdx: 0, toNodeId: 2, toNodeInputIdx: 0, weight: 1}
@@ -17,11 +20,11 @@ nodes:
   type: 'PIPE'
 - id: 3
   inputs:
-  - {idx: 0, bias: -0.214601837, default: 0.0, type: 'PRODUCT'}
+  - {idx: 0, bias: -0.225351707, default: 0.0, type: 'PRODUCT'}
   type: 'PIPE'
 - id: 4
   inputs:
-  - {idx: 0, bias: 1.214601837, default: 0.0, type: 'SUM'}
+  - {idx: 0, bias: 1.225351707, default: 0.0, type: 'SUM'}
   type: 'PIPE'
 - id: 5
   inputs:
