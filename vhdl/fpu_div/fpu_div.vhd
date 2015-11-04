@@ -73,17 +73,7 @@ entity fpu_div is
         
         -- Control signals
         start_i			: in std_logic; -- is also restart signal
-        ready_o 		: out std_logic;
-        
-        -- Exceptions
-        ine_o 			: out std_logic; -- inexact
-        overflow_o  	: out std_logic; -- overflow
-        underflow_o 	: out std_logic; -- underflow
-        div_zero_o  	: out std_logic; -- divide by zero
-        inf_o			: out std_logic; -- infinity
-        zero_o			: out std_logic; -- zero
-        qnan_o			: out std_logic; -- queit Not-a-Number
-        snan_o			: out std_logic -- signaling Not-a-Number
+        ready_o 		: out std_logic
 	);   
 end fpu_div;
 
@@ -204,14 +194,6 @@ begin
 
     s_fpu_op_i <= "011";
     output_o <= s_output_o;
-    ine_o <= s_ine_o;
-    overflow_o <= s_overflow_o;
-    underflow_o <= s_underflow_o;
-    div_zero_o <= s_div_zero_o;
-    inf_o <= s_inf_o;
-    zero_o <= s_zero_o;
-    qnan_o <= s_qnan_o;
-    snan_o <= s_snan_o;
 
 	-- FSM
 	process(clk_i)

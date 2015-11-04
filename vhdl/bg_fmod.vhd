@@ -67,15 +67,7 @@ begin
                     rmode_i => "00",
                     output_o => fp_div_to_trunc,
                     start_i => fp_start,
-                    ready_o => fp_start_div_to_trunc,
-                    ine_o => open,
-                    overflow_o => open,
-                    underflow_o => open,
-                    div_zero_o => open,
-                    inf_o => open,
-                    zero_o => open,
-                    qnan_o => open,
-                    snan_o => open
+                    ready_o => fp_start_div_to_trunc
                  );
     fp_trunc : entity work.fpu_trunc(rtl)
         port map (
@@ -83,15 +75,7 @@ begin
                     opa_i => fp_div_to_trunc,
                     output_o => fp_trunc_to_mul,
                     start_i => fp_start_div_to_trunc,
-                    ready_o => fp_start_trunc_to_mul,
-                    ine_o => open,
-                    overflow_o => open,
-                    underflow_o => open,
-                    div_zero_o => open,
-                    inf_o => open,
-                    zero_o => open,
-                    qnan_o => open,
-                    snan_o => open
+                    ready_o => fp_start_trunc_to_mul
                  );
 
     fp_mul : entity work.fpu_mul(rtl)
@@ -102,15 +86,7 @@ begin
                     rmode_i => "00", -- round to nearest even
                     output_o => fp_mul_to_sub,
                     start_i => fp_start_trunc_to_mul,
-                    ready_o => fp_start_mul_to_sub,
-                    ine_o => open,
-                    overflow_o => open,
-                    underflow_o => open,
-                    div_zero_o => open,
-                    inf_o => open,
-                    zero_o => open,
-                    qnan_o => open,
-                    snan_o => open
+                    ready_o => fp_start_mul_to_sub
                  );
 
     fp_sub : entity work.fpu_sub(rtl)
@@ -121,15 +97,7 @@ begin
                     rmode_i => "00", -- round to nearest even
                     output_o => fp_result,
                     start_i => fp_start_mul_to_sub,
-                    ready_o => fp_rdy,
-                    ine_o => open,
-                    overflow_o => open,
-                    underflow_o => open,
-                    div_zero_o => open,
-                    inf_o => open,
-                    zero_o => open,
-                    qnan_o => open,
-                    snan_o => open
+                    ready_o => fp_rdy
                  );
 
         -- Process to detect if the fp stage has raised fp_rdy since last fp_start signal

@@ -67,15 +67,7 @@ begin
                 rmode_i => "00", -- round to nearest even
                 output_o => fp_result,
                 start_i => fp_start,
-                ready_o => fp_rdy,
-                ine_o => open,
-                overflow_o => open,
-                underflow_o => open,
-                div_zero_o => open,
-                inf_o => open,
-                zero_o => open,
-                qnan_o => open,
-                snan_o => open
+                ready_o => fp_rdy
              );
 
     internal_input_req <= in_req;
