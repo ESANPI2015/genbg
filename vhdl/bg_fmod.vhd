@@ -64,7 +64,7 @@ begin
                     clk_i => clk,
                     opa_i => fp_opa,
                     opb_i => fp_opb,
-                    rmode_i => "01", -- use round to zero at div as well :)
+                    rmode_i => "00",
                     output_o => fp_div_to_trunc,
                     start_i => fp_start,
                     ready_o => fp_start_div_to_trunc,

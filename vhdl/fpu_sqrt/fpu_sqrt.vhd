@@ -182,40 +182,28 @@ begin
 			
 -----------------------------------------------------------------			
 
-	-- Input Register
-	process(clk_i)
-	begin
-		if rising_edge(clk_i) then	
-			s_opa_i <= opa_i;
-			s_fpu_op_i <= "100";
-			s_rmode_i <= rmode_i;
-			s_start_i <= start_i;
-		end if;
-	end process;
-	  
-	-- Output Register
-	process(clk_i)
-	begin
-		if rising_edge(clk_i) then	
-			output_o <= s_output_o;
-			ine_o <= s_ine_o;
-			overflow_o <= s_overflow_o;
-			underflow_o <= s_underflow_o;
-			div_zero_o <= s_div_zero_o;
-			inf_o <= s_inf_o;
-			zero_o <= s_zero_o;
-			qnan_o <= s_qnan_o;
-			snan_o <= s_snan_o;
-		end if;
-	end process;	
-
+    s_fpu_op_i <= "100";
+    output_o <= s_output_o;
+    ine_o <= s_ine_o;
+    overflow_o <= s_overflow_o;
+    underflow_o <= s_underflow_o;
+    div_zero_o <= s_div_zero_o;
+    inf_o <= s_inf_o;
+    zero_o <= s_zero_o;
+    qnan_o <= s_qnan_o;
+    snan_o <= s_snan_o;
     
 	-- FSM
 	process(clk_i)
 	begin
 		if rising_edge(clk_i) then
+            ready_o <= '0';
+            s_start_i <= '0';
 			if s_start_i ='1' then
 				s_state <= busy;
+                s_opa_i <= opa_i;
+                s_rmode_i <= rmode_i;
+                s_start_i <= '1';
 				s_count <= 0;
 			elsif s_count=33 then
 				s_state <= waiting;
@@ -225,7 +213,6 @@ begin
 				s_count <= s_count + 1;
 			else
 				s_state <= waiting;
-				ready_o <= '0';
 			end if;
 	end if;	
 	end process;

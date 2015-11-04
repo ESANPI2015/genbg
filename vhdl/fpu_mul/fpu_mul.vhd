@@ -159,7 +159,7 @@ architecture rtl of fpu_mul is
 	
 	type   t_state is (waiting,busy);
 	signal s_state : t_state;
-	signal s_start_i : std_logic;
+    signal s_start_i : std_logic;
 	signal s_count : integer;
 	signal s_output1 : std_logic_vector(FP_WIDTH-1 downto 0);	
 	signal s_infa, s_infb : std_logic;
@@ -196,7 +196,7 @@ begin
                  fractb_i => pre_norm_mul_fractb_24,
                  signa_i => s_opa_i(31),
                  signb_i => s_opb_i(31),
-                 start_i => start_i,
+                 start_i => s_start_i,
                  fract_o => mul_fract_48, 
                  sign_o =>	mul_sign,
                  ready_o => open);
@@ -204,8 +204,14 @@ begin
         process(clk_i)
         begin
             if rising_edge(clk_i) then
-                if s_start_i ='1' then
+                ready_o <= '0';
+                s_start_i <= '0';
+                if start_i ='1' then
                     s_state <= busy;
+                    s_opa_i <= opa_i;
+                    s_opb_i <= opb_i;
+                    s_rmode_i <= rmode_i;
+                    s_start_i <= '1';
                     s_count <= 0;
                 elsif s_count=MUL_COUNT_PAR then
                     s_state <= waiting;
@@ -215,7 +221,6 @@ begin
                     s_count <= s_count + 1;
                 else
                     s_state <= waiting;
-                    ready_o <= '0';
                 end if;
         end if;	
         end process;
@@ -237,8 +242,14 @@ begin
         process(clk_i)
         begin
             if rising_edge(clk_i) then
-                if s_start_i ='1' then
+                ready_o <= '0';
+                s_start_i <= '0';
+                if start_i ='1' then
                     s_state <= busy;
+                    s_opa_i <= opa_i;
+                    s_opb_i <= opb_i;
+                    s_rmode_i <= rmode_i;
+                    s_start_i <= '1';
                     s_count <= 0;
                 elsif s_count=MUL_COUNT_SER then
                     s_state <= waiting;
@@ -248,7 +259,6 @@ begin
                     s_count <= s_count + 1;
                 else
                     s_state <= waiting;
-                    ready_o <= '0';
                 end if;
         end if;	
         end process;
@@ -269,35 +279,17 @@ begin
 		
 -----------------------------------------------------------------			
 
-	-- Input Register
-	process(clk_i)
-	begin
-		if rising_edge(clk_i) then	
-			s_opa_i <= opa_i;
-			s_opb_i <= opb_i;
-			s_fpu_op_i <= "010";
-			s_rmode_i <= rmode_i;
-			s_start_i <= start_i;
-		end if;
-	end process;
+    s_fpu_op_i <= "010";
+    output_o <= s_output_o;
+    ine_o <= s_ine_o;
+    overflow_o <= s_overflow_o;
+    underflow_o <= s_underflow_o;
+    div_zero_o <= s_div_zero_o;
+    inf_o <= s_inf_o;
+    zero_o <= s_zero_o;
+    qnan_o <= s_qnan_o;
+    snan_o <= s_snan_o;
 	  
-	-- Output Register
-	process(clk_i)
-	begin
-		if rising_edge(clk_i) then	
-			output_o <= s_output_o;
-			ine_o <= s_ine_o;
-			overflow_o <= s_overflow_o;
-			underflow_o <= s_underflow_o;
-			div_zero_o <= s_div_zero_o;
-			inf_o <= s_inf_o;
-			zero_o <= s_zero_o;
-			qnan_o <= s_qnan_o;
-			snan_o <= s_snan_o;
-		end if;
-	end process;	
-
-    
     s_output1 	<= post_norm_mul_output;
     s_ine_o 		<= post_norm_mul_ine;
 	
