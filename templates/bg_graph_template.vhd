@@ -360,8 +360,8 @@ begin
                     out_ack => from_unary_ack(i)(0)
                      );
                  end generate;
-        GENERATE_SINE : if (UNARY_TYPES(i) = sine) generate
-            sine : bg_sine
+        GENERATE_COSINE : if (UNARY_TYPES(i) = cosine) generate
+            cosine : bg_cosine
             port map (
                     clk => clk,
                     rst => rst,

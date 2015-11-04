@@ -6,7 +6,7 @@ library work;
 use work.bg_vhdl_types.all;
 -- Add additional libraries here
 
-entity bg_sine is
+entity bg_cosine is
     port(
     -- Inputs
         in_port : in std_logic_vector(DATA_WIDTH-1 downto 0);
@@ -21,14 +21,14 @@ entity bg_sine is
         rst : in std_logic;
         clk : in std_logic
         );
-end bg_sine;
+end bg_cosine;
 
-architecture Behavioral of bg_sine is
+architecture Behavioral of bg_cosine is
 
 begin
 
--- Instantiate the GENERATED SINE :D
-    sine : entity work.bg_graph_sine(Behavioral)
+-- Instantiate the GENERATED cosine :D
+    cosine : entity work.bg_graph_cosine(Behavioral)
     port map (
                 clk => clk,
                 rst => rst,

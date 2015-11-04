@@ -84,7 +84,7 @@ package bg_graph_components is
             );
     end component;
 
-	component bg_sine is
+	component bg_cosine is
         port(
         -- Inputs
             in_port : in std_logic_vector(DATA_WIDTH-1 downto 0);

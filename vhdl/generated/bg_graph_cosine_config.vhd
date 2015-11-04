@@ -3,8 +3,8 @@
 --
 -- Contains all necessary constants, types etc. for synthesis 
 --
--- Instance: sine
--- GENERATED: Tue Nov  3 17:31:47 2015
+-- Instance: cosine
+-- GENERATED: Wed Nov  4 10:52:09 2015
 --
 --
 -- Author: M. Schilling
@@ -16,22 +16,22 @@ use IEEE.STD_LOGIC_1164.ALL;
 library work;
 use work.bg_vhdl_types.all;
 
-package bg_graph_sine_config is
+package bg_graph_cosine_config is
 
     -----
     -- Important constants for instantiation
     ----
     constant NO_INPUTS  : integer := 1;
     constant NO_OUTPUTS : integer := 1;
-    constant NO_EDGES   : integer := 45;
+    constant NO_EDGES   : integer := 32;
     constant NO_SOURCES : integer := 1;
     constant NO_SINKS   : integer := 0;
-    constant NO_COPIES  : integer := 31;
-    constant NO_MERGES  : integer := 37;
+    constant NO_COPIES  : integer := 19;
+    constant NO_MERGES  : integer := 29;
     -- TODO: Add other nodes
-    constant NO_UNARY   : integer := 28;
+    constant NO_UNARY   : integer := 14;
     constant NO_BINARY  : integer := 1;
-    constant NO_TERNARY : integer := 3;
+    constant NO_TERNARY : integer := 5;
     constant EPSILON : std_logic_vector(DATA_WIDTH-1 downto 0) := x"358637bd"; -- 0.000001f;
 
     -----
@@ -64,9 +64,9 @@ package bg_graph_sine_config is
 1 => x"3f800000", -- 1.000000f
 2 => x"3f800000", -- 1.000000f
 3 => x"3f800000", -- 1.000000f
-4 => x"bf800000", -- -1.000000f
+4 => x"3f800000", -- 1.000000f
 5 => x"3f800000", -- 1.000000f
-6 => x"bf800000", -- -1.000000f
+6 => x"3f800000", -- 1.000000f
 7 => x"3f800000", -- 1.000000f
 8 => x"3f800000", -- 1.000000f
 9 => x"3f800000", -- 1.000000f
@@ -85,26 +85,13 @@ package bg_graph_sine_config is
 22 => x"3f800000", -- 1.000000f
 23 => x"3f800000", -- 1.000000f
 24 => x"3f800000", -- 1.000000f
-25 => x"bf800000", -- -1.000000f
+25 => x"3f800000", -- 1.000000f
 26 => x"3f800000", -- 1.000000f
 27 => x"3f800000", -- 1.000000f
 28 => x"3f800000", -- 1.000000f
 29 => x"3f800000", -- 1.000000f
 30 => x"3f800000", -- 1.000000f
 31 => x"3f800000", -- 1.000000f
-32 => x"3f800000", -- 1.000000f
-33 => x"bf800000", -- -1.000000f
-34 => x"3f800000", -- 1.000000f
-35 => x"3f800000", -- 1.000000f
-36 => x"3f800000", -- 1.000000f
-37 => x"3f800000", -- 1.000000f
-38 => x"3f800000", -- 1.000000f
-39 => x"3f800000", -- 1.000000f
-40 => x"3f800000", -- 1.000000f
-41 => x"3f800000", -- 1.000000f
-42 => x"3f800000", -- 1.000000f
-43 => x"3f800000", -- 1.000000f
-44 => x"3f800000", -- 1.000000f
 -- DONE
         others => ("00000000000000000000000000000000") -- dummy
     );
@@ -114,7 +101,9 @@ package bg_graph_sine_config is
 1 => simple,
 2 => simple,
 3 => simple,
+4 => simple,
 5 => simple,
+6 => simple,
 7 => simple,
 8 => simple,
 9 => simple,
@@ -133,24 +122,13 @@ package bg_graph_sine_config is
 22 => simple,
 23 => simple,
 24 => simple,
+25 => simple,
 26 => simple,
 27 => simple,
 28 => simple,
 29 => simple,
 30 => simple,
 31 => simple,
-32 => simple,
-34 => simple,
-35 => simple,
-36 => simple,
-37 => simple,
-38 => simple,
-39 => simple,
-40 => simple,
-41 => simple,
-42 => simple,
-43 => simple,
-44 => simple,
 -- DONE
         others => normal
     );
@@ -160,38 +138,24 @@ package bg_graph_sine_config is
     ----
     type unary_ports_t is array (NO_UNARY-1 downto 0) of DATA_PORT(0 downto 0);
     type unary_signals_t is array (NO_UNARY-1 downto 0) of DATA_SIGNAL(0 downto 0);
-    type unary_type_t is (none, pipe, div, sqrt, absolute);
+    type unary_type_t is (none, pipe, div, sqrt, absolute, cosine);
     type unary_types_t is array (NO_UNARY downto 0) of unary_type_t;
     constant UNARY_TYPES : unary_types_t :=
     (
         0 => pipe,
 1 => pipe,
-2 => pipe,
+2 => absolute,
 3 => pipe,
-4 => pipe,
+4 => absolute,
 5 => pipe,
 6 => pipe,
 7 => pipe,
 8 => pipe,
 9 => pipe,
 10 => pipe,
-11 => pipe,
+11 => absolute,
 12 => pipe,
 13 => pipe,
-14 => pipe,
-15 => pipe,
-16 => pipe,
-17 => pipe,
-18 => pipe,
-19 => pipe,
-20 => pipe,
-21 => pipe,
-22 => pipe,
-23 => pipe,
-24 => pipe,
-25 => pipe,
-26 => pipe,
-27 => pipe,
 -- DONE
         others => none
     );
@@ -226,6 +190,8 @@ package bg_graph_sine_config is
         0 => greater_than_zero,
 1 => greater_than_zero,
 2 => greater_than_zero,
+3 => greater_than_zero,
+4 => greater_than_zero,
 -- DONE
         others => none
     );
@@ -238,7 +204,7 @@ package bg_graph_sine_config is
     type source_values_t is array (NO_SOURCES downto 0) of std_logic_vector(DATA_WIDTH-1 downto 0);
     constant SOURCE_VALUES : source_values_t :=
     (
-        0 => x"40c90fdb", -- 6.283185f
+        0 => x"40800000", -- 4.000000f
 -- DONE
         others => ("00000000000000000000000000000000") -- dummy
     );
@@ -262,40 +228,32 @@ package bg_graph_sine_config is
         0 => simple_sum,
 1 => simple_sum,
 2 => prod,
-3 => sum,
-4 => prod,
-5 => prod,
+3 => simple_sum,
+4 => simple_sum,
+5 => simple_sum,
 6 => sum,
-7 => prod,
+7 => sum,
 8 => sum,
 9 => sum,
-10 => prod,
-11 => prod,
+10 => sum,
+11 => simple_sum,
 12 => sum,
-13 => prod,
-14 => sum,
-15 => sum,
+13 => simple_sum,
+14 => simple_sum,
+15 => simple_sum,
 16 => prod,
 17 => prod,
 18 => sum,
-19 => prod,
-20 => sum,
+19 => simple_sum,
+20 => simple_sum,
 21 => simple_sum,
-22 => prod,
-23 => prod,
-24 => sum,
-25 => prod,
-26 => sum,
-27 => sum,
-28 => prod,
-29 => simple_sum,
-30 => sum,
-31 => prod,
-32 => simple_sum,
-33 => sum,
-34 => simple_sum,
-35 => simple_sum,
-36 => simple_sum,
+22 => sum,
+23 => simple_sum,
+24 => simple_sum,
+25 => sum,
+26 => simple_sum,
+27 => simple_sum,
+28 => simple_sum,
 -- DONE
         others => none
     );
@@ -303,41 +261,33 @@ package bg_graph_sine_config is
     (
         0 => x"00000000", -- 0.000000f
 1 => x"00000000", -- 0.000000f
-2 => x"3f22f983", -- 0.636620f
-3 => x"40800000", -- 4.000000f
-4 => x"3f800000", -- 1.000000f
-5 => x"be5bc095", -- -0.214602f
-6 => x"3f9b7813", -- 1.214602f
-7 => x"bf800000", -- -1.000000f
-8 => x"3f800000", -- 1.000000f
-9 => x"c0000000", -- -2.000000f
-10 => x"3f800000", -- 1.000000f
-11 => x"be5bc095", -- -0.214602f
-12 => x"3f9b7813", -- 1.214602f
-13 => x"bf800000", -- -1.000000f
-14 => x"3f800000", -- 1.000000f
-15 => x"40000000", -- 2.000000f
-16 => x"3f800000", -- 1.000000f
-17 => x"be5bc095", -- -0.214602f
-18 => x"3f9b7813", -- 1.214602f
-19 => x"bf800000", -- -1.000000f
-20 => x"3f800000", -- 1.000000f
+2 => x"bf22f983", -- -0.636620f
+3 => x"00000000", -- 0.000000f
+4 => x"00000000", -- 0.000000f
+5 => x"00000000", -- 0.000000f
+6 => x"c0400000", -- -3.000000f
+7 => x"40800000", -- 4.000000f
+8 => x"c0000000", -- -2.000000f
+9 => x"bf800000", -- -1.000000f
+10 => x"40000000", -- 2.000000f
+11 => x"00000000", -- 0.000000f
+12 => x"c0000000", -- -2.000000f
+13 => x"00000000", -- 0.000000f
+14 => x"00000000", -- 0.000000f
+15 => x"00000000", -- 0.000000f
+16 => x"3f9cd853", -- 1.225352f
+17 => x"be19b011", -- -0.150086f
+18 => x"bf800000", -- -1.000000f
+19 => x"00000000", -- 0.000000f
+20 => x"00000000", -- 0.000000f
 21 => x"00000000", -- 0.000000f
-22 => x"3f800000", -- 1.000000f
-23 => x"be5bc095", -- -0.214602f
-24 => x"3f9b7813", -- 1.214602f
-25 => x"bf800000", -- -1.000000f
-26 => x"3f800000", -- 1.000000f
-27 => x"bf800000", -- -1.000000f
-28 => x"bf800000", -- -1.000000f
-29 => x"00000000", -- 0.000000f
-30 => x"c0000000", -- -2.000000f
-31 => x"bf800000", -- -1.000000f
-32 => x"00000000", -- 0.000000f
-33 => x"c0400000", -- -3.000000f
-34 => x"00000000", -- 0.000000f
-35 => x"00000000", -- 0.000000f
-36 => x"00000000", -- 0.000000f
+22 => x"bf800000", -- -1.000000f
+23 => x"00000000", -- 0.000000f
+24 => x"00000000", -- 0.000000f
+25 => x"c0400000", -- -3.000000f
+26 => x"00000000", -- 0.000000f
+27 => x"00000000", -- 0.000000f
+28 => x"00000000", -- 0.000000f
 -- DONE
         others => ("00000000000000000000000000000000") -- dummy
     );
@@ -347,39 +297,31 @@ package bg_graph_sine_config is
 1 => 1,
 2 => 1,
 3 => 1,
-4 => 2,
+4 => 1,
 5 => 1,
 6 => 1,
-7 => 2,
+7 => 1,
 8 => 1,
 9 => 1,
-10 => 2,
+10 => 1,
 11 => 1,
 12 => 1,
-13 => 2,
+13 => 1,
 14 => 1,
 15 => 1,
 16 => 2,
-17 => 1,
-18 => 1,
-19 => 2,
+17 => 2,
+18 => 2,
+19 => 1,
 20 => 1,
 21 => 1,
-22 => 2,
+22 => 1,
 23 => 1,
 24 => 1,
-25 => 2,
+25 => 1,
 26 => 1,
 27 => 1,
 28 => 1,
-29 => 1,
-30 => 1,
-31 => 1,
-32 => 1,
-33 => 1,
-34 => 1,
-35 => 1,
-36 => 1,
 -- DONE
         others => 0 -- dummy
     );
@@ -398,34 +340,22 @@ package bg_graph_sine_config is
         0 => 1,
 1 => 1,
 2 => 1,
-3 => 7,
+3 => 2,
 4 => 2,
-5 => 2,
-6 => 1,
+5 => 1,
+6 => 7,
 7 => 1,
 8 => 1,
 9 => 1,
 10 => 2,
-11 => 2,
+11 => 3,
 12 => 1,
-13 => 1,
+13 => 2,
 14 => 1,
 15 => 1,
 16 => 2,
-17 => 2,
+17 => 1,
 18 => 1,
-19 => 1,
-20 => 1,
-21 => 1,
-22 => 2,
-23 => 2,
-24 => 1,
-25 => 1,
-26 => 1,
-27 => 1,
-28 => 1,
-29 => 1,
-30 => 1,
 -- DONE
         others => 0 -- dummy
     );

@@ -270,9 +270,9 @@ bg_error bg_node_generate(bg_generator_t *g, bg_node_t *n, const unsigned int lv
             nodeId = g->unaryNodes++;
             sprintf(nodeType, "unary");
             break;
-        case bg_NODE_TYPE_SIN:
+        case bg_NODE_TYPE_COS:
             sprintf(entry.token, "@unaryType%u@", g->unaryNodes);
-            snprintf(entry.repl, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "%u => sine,\n@unaryType%u@", g->unaryNodes, g->unaryNodes+1);
+            snprintf(entry.repl, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "%u => cosine,\n@unaryType%u@", g->unaryNodes, g->unaryNodes+1);
             writeDictionary(g->out, &entry);
             nodeId = g->unaryNodes++;
             sprintf(nodeType, "unary");
@@ -301,7 +301,7 @@ bg_error bg_node_generate(bg_generator_t *g, bg_node_t *n, const unsigned int lv
         case bg_NODE_TYPE_SUBGRAPH:
             err = bg_graph_generate(g, ((subgraph_data_t*)n->_priv_data)->subgraph, lvl+1);
             break;
-        case bg_NODE_TYPE_COS:
+        case bg_NODE_TYPE_SIN:
         case bg_NODE_TYPE_TAN:
         case bg_NODE_TYPE_ACOS:
         case bg_NODE_TYPE_ATAN2:
