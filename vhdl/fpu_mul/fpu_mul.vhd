@@ -136,7 +136,6 @@ architecture rtl of fpu_mul is
 		);
 	end component;
 	
-	--constant MUL_SERIAL: integer range 0 to 1 := 1; -- 0 for parallel multiplier, 1 for serial
 	constant MUL_COUNT_SER : integer:= 34;
     constant MUL_COUNT_PAR : integer := 11;
 		
@@ -150,7 +149,7 @@ architecture rtl of fpu_mul is
 	type   t_state is (waiting,busy);
 	signal s_state : t_state;
     signal s_start_i : std_logic;
-	signal s_count : integer;
+	signal s_count : integer range 0 to 34;
 	signal s_output1 : std_logic_vector(FP_WIDTH-1 downto 0);	
 	signal s_infa, s_infb : std_logic;
 	
@@ -205,6 +204,7 @@ begin
                     s_count <= 0;
                 elsif s_count=MUL_COUNT_PAR then
                     s_state <= waiting;
+                    output_o <= s_output_o;
                     ready_o <= '1';
                     s_count <=0;
                 elsif s_state=busy then
@@ -243,6 +243,7 @@ begin
                     s_count <= 0;
                 elsif s_count=MUL_COUNT_SER then
                     s_state <= waiting;
+                    output_o <= s_output_o;
                     ready_o <= '1';
                     s_count <=0;
                 elsif s_state=busy then
@@ -270,7 +271,6 @@ begin
 -----------------------------------------------------------------			
 
     s_fpu_op_i <= "010";
-    output_o <= s_output_o;
 
     s_output1 	<= post_norm_mul_output;
     s_ine_o 		<= post_norm_mul_ine;

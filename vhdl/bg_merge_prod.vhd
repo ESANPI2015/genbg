@@ -37,7 +37,7 @@ architecture Behavioral of bg_merge_prod is
     signal internal_output_req : std_logic;
     signal internal_output_ack : std_logic;
 
-    signal currInput : integer;
+    signal currInput : integer range 0 to NO_INPUTS-1;
 
     -- FP stuff
     signal fp_opa : std_logic_vector(DATA_WIDTH-1 downto 0);

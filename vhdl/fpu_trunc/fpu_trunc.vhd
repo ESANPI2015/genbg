@@ -38,13 +38,13 @@ architecture rtl of fpu_trunc is
 
 type t_state is (waiting,busy);
 signal s_state : t_state;
-signal s_count : integer;
+signal s_count : integer range 0 to 4;
 
 signal s_opa_i : std_logic_vector(FP_WIDTH-1 downto 0);
 signal s_output1 : std_logic_vector(FP_WIDTH-1 downto 0);
 signal exponent : signed(7 downto 0);
-signal dec_point : integer;
 signal s_ine_o, s_overflow_o, s_underflow_o, s_div_zero_o, s_inf_o, s_zero_o, s_qnan_o, s_snan_o : std_logic;
+signal dec_point : integer range 0 to 23;
 
 begin
 

@@ -131,7 +131,7 @@ architecture rtl of fpu_div is
 	type   t_state is (waiting,busy);
     signal s_start_i : std_logic;
 	signal s_state : t_state;
-	signal s_count : integer;
+	signal s_count : integer range 0 to 33;
 	signal s_output1 : std_logic_vector(FP_WIDTH-1 downto 0);	
 	signal s_infa, s_infb : std_logic;
 	
@@ -193,7 +193,6 @@ begin
 -----------------------------------------------------------------			
 
     s_fpu_op_i <= "011";
-    output_o <= s_output_o;
 
 	-- FSM
 	process(clk_i)
@@ -210,6 +209,7 @@ begin
 				s_count <= 0;
 			elsif s_count=33 then
 				s_state <= waiting;
+                output_o <= s_output_o;
 				ready_o <= '1';
 				s_count <=0;
 			elsif s_state=busy then
