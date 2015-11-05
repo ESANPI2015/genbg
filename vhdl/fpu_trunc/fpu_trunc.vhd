@@ -41,48 +41,62 @@ signal s_state : t_state;
 signal s_count : integer range 0 to 4;
 
 signal s_opa_i : std_logic_vector(FP_WIDTH-1 downto 0);
-signal s_output1 : std_logic_vector(FP_WIDTH-1 downto 0);
+signal s_output_o : std_logic_vector(FP_WIDTH-1 downto 0);
 signal exponent : signed(7 downto 0);
-signal s_ine_o, s_overflow_o, s_underflow_o, s_div_zero_o, s_inf_o, s_zero_o, s_qnan_o, s_snan_o : std_logic;
+signal pass_through : std_logic;
+signal is_neg : std_logic;
+signal mux_select : std_logic_vector(1 downto 0);
 signal dec_point : integer range 0 to 23;
+signal s_inf_o, s_nan_o : std_logic;
 
 begin
 
-exponent <= signed(s_opa_i(30 downto 23)) - 127; -- first stage (1 adder)
-dec_point <= to_integer(22 - exponent + 1); -- second stage (1 adder + conversion)
-s_output1 <= (others => '0') when exponent < 0 else s_opa_i(FP_WIDTH-1 downto dec_point) & ZERO_VECTOR(dec_point-1 downto 0); -- third stage (1 comparator, 1 mux)
-output_o  <= s_opa_i when (s_snan_o or s_inf_o)='1' else s_output1; -- fourth stage (1 mux)
+-- this is pure combinatorical, so to increase reg usage, we have to make it sequential.
+--exponent <= signed(s_opa_i(30 downto 23)) - 127; -- first stage (1 adder)
+--dec_point <= to_integer(23 - exponent); -- second stage (conversion)
+--s_output1 <= (others => '0') when exponent < 0 else s_opa_i(FP_WIDTH-1 downto dec_point) & ZERO_VECTOR(dec_point-1 downto 0); -- third stage (1 comparator, 1 mux)
+--s_output_o <= s_opa_i when (s_snan_o or s_inf_o)='1' else s_output1; -- fourth stage (1 mux)
+
+-- First parallel stuff
+exponent <= signed(s_opa_i(30 downto 23)) - 127;
+pass_through <= s_nan_o or s_inf_o;
+-- Second parallel stuff
+is_neg <= '1' when exponent < 0 else '0';
+-- Third parallel stuff
+dec_point <= to_integer(23 - exponent) when is_neg='0' else 0;
+-- Fourth parallel stuff
+mux_select(1) <= pass_through;
+mux_select(0) <= is_neg;
+
+with mux_select select
+    s_output_o <= s_opa_i when "1X",
+                  (others => '0') when "01",
+                  s_opa_i(FP_WIDTH-1 downto dec_point) & ZERO_VECTOR(dec_point-1 downto 0) when "00";
 
 -- FSM
 process(clk_i)
 begin
 	if rising_edge(clk_i) then
+        ready_o <= '0';
 		if start_i ='1' then
             s_opa_i <= opa_i;
 			s_state <= busy;
 			s_count <= 4; 
 		elsif s_count=0 and s_state=busy then
 			s_state <= waiting;
-			s_count <= 4; 
+            output_o <= s_output_o;
 			ready_o <= '1';
+			s_count <= 4; 
 		elsif s_state=busy then
 			s_count <= s_count - 1;
-			ready_o <= '0';
 		else
 			s_state <= waiting;
-			ready_o <= '0';
 		end if;
 	end if;	
 end process;
 
 -- Generate Exceptions 
-s_ine_o <= '0';
-s_underflow_o <= '0'; 
-s_overflow_o <= '0';
-s_div_zero_o <= '0';
-s_inf_o <= '1' when s_opa_i(30 downto 23)="11111111" and (s_qnan_o or s_snan_o)='0' else '0';
-s_zero_o <= '1' when or_reduce(s_output1(30 downto 0))='0' else '0';
-s_qnan_o <= '0';
-s_snan_o <= '1' when s_opa_i(30 downto 0)=SNAN else '0';
+s_inf_o <= '1' when s_opa_i(30 downto 23)="11111111" and s_nan_o='0' else '0';
+s_nan_o <= '1' when s_opa_i(30 downto 0)=SNAN or s_opa_i(30 downto 0)=QNAN else '0';
 
 end rtl;
