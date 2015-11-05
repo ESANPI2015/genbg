@@ -4,7 +4,7 @@
 -- Contains all necessary constants, types etc. for synthesis 
 --
 -- Instance: cosine
--- GENERATED: Wed Nov  4 10:52:09 2015
+-- GENERATED: Thu Nov  5 09:36:22 2015
 --
 --
 -- Author: M. Schilling
@@ -23,13 +23,13 @@ package bg_graph_cosine_config is
     ----
     constant NO_INPUTS  : integer := 1;
     constant NO_OUTPUTS : integer := 1;
-    constant NO_EDGES   : integer := 32;
+    constant NO_EDGES   : integer := 35;
     constant NO_SOURCES : integer := 1;
     constant NO_SINKS   : integer := 0;
-    constant NO_COPIES  : integer := 19;
-    constant NO_MERGES  : integer := 29;
+    constant NO_COPIES  : integer := 22;
+    constant NO_MERGES  : integer := 32;
     -- TODO: Add other nodes
-    constant NO_UNARY   : integer := 14;
+    constant NO_UNARY   : integer := 17;
     constant NO_BINARY  : integer := 1;
     constant NO_TERNARY : integer := 5;
     constant EPSILON : std_logic_vector(DATA_WIDTH-1 downto 0) := x"358637bd"; -- 0.000001f;
@@ -92,6 +92,9 @@ package bg_graph_cosine_config is
 29 => x"3f800000", -- 1.000000f
 30 => x"3f800000", -- 1.000000f
 31 => x"3f800000", -- 1.000000f
+32 => x"3f800000", -- 1.000000f
+33 => x"3f800000", -- 1.000000f
+34 => x"3f800000", -- 1.000000f
 -- DONE
         others => ("00000000000000000000000000000000") -- dummy
     );
@@ -129,6 +132,9 @@ package bg_graph_cosine_config is
 29 => simple,
 30 => simple,
 31 => simple,
+32 => simple,
+33 => simple,
+34 => simple,
 -- DONE
         others => normal
     );
@@ -153,9 +159,12 @@ package bg_graph_cosine_config is
 8 => pipe,
 9 => pipe,
 10 => pipe,
-11 => absolute,
+11 => pipe,
 12 => pipe,
 13 => pipe,
+14 => absolute,
+15 => pipe,
+16 => pipe,
 -- DONE
         others => none
     );
@@ -234,26 +243,29 @@ package bg_graph_cosine_config is
 6 => sum,
 7 => sum,
 8 => sum,
-9 => sum,
+9 => simple_sum,
 10 => sum,
 11 => simple_sum,
-12 => sum,
-13 => simple_sum,
+12 => simple_sum,
+13 => sum,
 14 => simple_sum,
 15 => simple_sum,
-16 => prod,
-17 => prod,
-18 => sum,
-19 => simple_sum,
-20 => simple_sum,
-21 => simple_sum,
-22 => sum,
+16 => simple_sum,
+17 => simple_sum,
+18 => simple_sum,
+19 => prod,
+20 => prod,
+21 => sum,
+22 => simple_sum,
 23 => simple_sum,
 24 => simple_sum,
-25 => sum,
+25 => simple_sum,
 26 => simple_sum,
 27 => simple_sum,
 28 => simple_sum,
+29 => simple_sum,
+30 => simple_sum,
+31 => simple_sum,
 -- DONE
         others => none
     );
@@ -266,28 +278,31 @@ package bg_graph_cosine_config is
 4 => x"00000000", -- 0.000000f
 5 => x"00000000", -- 0.000000f
 6 => x"c0400000", -- -3.000000f
-7 => x"40800000", -- 4.000000f
-8 => x"c0000000", -- -2.000000f
-9 => x"bf800000", -- -1.000000f
-10 => x"40000000", -- 2.000000f
+7 => x"c0000000", -- -2.000000f
+8 => x"bf800000", -- -1.000000f
+9 => x"00000000", -- 0.000000f
+10 => x"40800000", -- 4.000000f
 11 => x"00000000", -- 0.000000f
-12 => x"c0000000", -- -2.000000f
-13 => x"00000000", -- 0.000000f
+12 => x"00000000", -- 0.000000f
+13 => x"40000000", -- 2.000000f
 14 => x"00000000", -- 0.000000f
 15 => x"00000000", -- 0.000000f
-16 => x"3f9cd853", -- 1.225352f
-17 => x"be19b011", -- -0.150086f
-18 => x"bf800000", -- -1.000000f
-19 => x"00000000", -- 0.000000f
-20 => x"00000000", -- 0.000000f
-21 => x"00000000", -- 0.000000f
-22 => x"bf800000", -- -1.000000f
+16 => x"00000000", -- 0.000000f
+17 => x"00000000", -- 0.000000f
+18 => x"00000000", -- 0.000000f
+19 => x"3f9cd853", -- 1.225352f
+20 => x"be19b011", -- -0.150086f
+21 => x"bf800000", -- -1.000000f
+22 => x"00000000", -- 0.000000f
 23 => x"00000000", -- 0.000000f
 24 => x"00000000", -- 0.000000f
-25 => x"c0400000", -- -3.000000f
+25 => x"00000000", -- 0.000000f
 26 => x"00000000", -- 0.000000f
 27 => x"00000000", -- 0.000000f
 28 => x"00000000", -- 0.000000f
+29 => x"00000000", -- 0.000000f
+30 => x"00000000", -- 0.000000f
+31 => x"00000000", -- 0.000000f
 -- DONE
         others => ("00000000000000000000000000000000") -- dummy
     );
@@ -309,12 +324,12 @@ package bg_graph_cosine_config is
 13 => 1,
 14 => 1,
 15 => 1,
-16 => 2,
-17 => 2,
-18 => 2,
-19 => 1,
-20 => 1,
-21 => 1,
+16 => 1,
+17 => 1,
+18 => 1,
+19 => 2,
+20 => 2,
+21 => 2,
 22 => 1,
 23 => 1,
 24 => 1,
@@ -322,6 +337,9 @@ package bg_graph_cosine_config is
 26 => 1,
 27 => 1,
 28 => 1,
+29 => 1,
+30 => 1,
+31 => 1,
 -- DONE
         others => 0 -- dummy
     );
@@ -343,19 +361,22 @@ package bg_graph_cosine_config is
 3 => 2,
 4 => 2,
 5 => 1,
-6 => 7,
-7 => 1,
-8 => 1,
-9 => 1,
-10 => 2,
-11 => 3,
+6 => 4,
+7 => 2,
+8 => 2,
+9 => 2,
+10 => 1,
+11 => 1,
 12 => 1,
 13 => 2,
-14 => 1,
+14 => 3,
 15 => 1,
 16 => 2,
 17 => 1,
 18 => 1,
+19 => 2,
+20 => 1,
+21 => 1,
 -- DONE
         others => 0 -- dummy
     );

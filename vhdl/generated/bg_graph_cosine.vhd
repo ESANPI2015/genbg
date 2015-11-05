@@ -4,7 +4,7 @@
 -- Components are instantiated and wired for synthesis
 --
 -- Instance: cosine
--- GENERATED: Wed Nov  4 10:52:09 2015
+-- GENERATED: Thu Nov  5 09:36:22 2015
 --
 --
 -- Author: M. Schilling
@@ -239,201 +239,165 @@ to_edge(11) <= from_copy(6)(3);
 to_edge_req(11) <= from_copy_req(6)(3);
 from_copy_ack(6)(3) <=to_edge_ack(11);
 
-to_edge(12) <= from_copy(6)(4);
-to_edge_req(12) <= from_copy_req(6)(4);
-from_copy_ack(6)(4) <=to_edge_ack(12);
+to_merge(6)(0) <= from_edge(10);
+to_merge_req(6)(0) <= from_edge_req(10);
+from_edge_ack(10) <= to_merge_ack(6)(0);
 
-to_edge(13) <= from_copy(6)(5);
-to_edge_req(13) <= from_copy_req(6)(5);
-from_copy_ack(6)(5) <=to_edge_ack(13);
+to_unary(6)(0) <= from_merge(6);
+to_unary_req(6)(0) <= from_merge_req(6);
+from_merge_ack(6) <= to_unary_ack(6)(0);
 
-to_edge(14) <= from_copy(6)(6);
-to_edge_req(14) <= from_copy_req(6)(6);
-from_copy_ack(6)(6) <=to_edge_ack(14);
+to_copy(7) <= from_unary(6)(0);
+to_copy_req(7) <= from_unary_req(6)(0);
+from_unary_ack(6)(0) <=to_copy_ack(7);
 
-to_merge(6)(0) <= from_edge(9);
-to_merge_req(6)(0) <= from_edge_req(9);
-from_edge_ack(9) <= to_merge_ack(6)(0);
+to_edge(12) <= from_copy(7)(0);
+to_edge_req(12) <= from_copy_req(7)(0);
+from_copy_ack(7)(0) <=to_edge_ack(12);
 
-to_merge(7)(0) <= from_edge(6);
-to_merge_req(7)(0) <= from_edge_req(6);
-from_edge_ack(6) <= to_merge_ack(7)(0);
+to_edge(13) <= from_copy(7)(1);
+to_edge_req(13) <= from_copy_req(7)(1);
+from_copy_ack(7)(1) <=to_edge_ack(13);
 
-to_merge(8)(0) <= from_edge(12);
-to_merge_req(8)(0) <= from_edge_req(12);
-from_edge_ack(12) <= to_merge_ack(8)(0);
+to_merge(7)(0) <= from_edge(9);
+to_merge_req(7)(0) <= from_edge_req(9);
+from_edge_ack(9) <= to_merge_ack(7)(0);
 
-to_ternary(0)(0) <= from_merge(6);
-to_ternary_req(0)(0) <= from_merge_req(6);
-from_merge_ack(6) <= to_ternary_ack(0)(0);
+to_unary(7)(0) <= from_merge(7);
+to_unary_req(7)(0) <= from_merge_req(7);
+from_merge_ack(7) <= to_unary_ack(7)(0);
 
-to_ternary(0)(1) <= from_merge(7);
-to_ternary_req(0)(1) <= from_merge_req(7);
-from_merge_ack(7) <= to_ternary_ack(0)(1);
+to_copy(8) <= from_unary(7)(0);
+to_copy_req(8) <= from_unary_req(7)(0);
+from_unary_ack(7)(0) <=to_copy_ack(8);
 
-to_ternary(0)(2) <= from_merge(8);
-to_ternary_req(0)(2) <= from_merge_req(8);
-from_merge_ack(8) <= to_ternary_ack(0)(2);
+to_edge(14) <= from_copy(8)(0);
+to_edge_req(14) <= from_copy_req(8)(0);
+from_copy_ack(8)(0) <=to_edge_ack(14);
 
-to_copy(7) <= from_ternary(0)(0);
-to_copy_req(7) <= from_ternary_req(0)(0);
-from_ternary_ack(0)(0) <=to_copy_ack(7);
+to_edge(15) <= from_copy(8)(1);
+to_edge_req(15) <= from_copy_req(8)(1);
+from_copy_ack(8)(1) <=to_edge_ack(15);
 
-to_edge(15) <= from_copy(7)(0);
-to_edge_req(15) <= from_copy_req(7)(0);
-from_copy_ack(7)(0) <=to_edge_ack(15);
+to_merge(8)(0) <= from_edge(8);
+to_merge_req(8)(0) <= from_edge_req(8);
+from_edge_ack(8) <= to_merge_ack(8)(0);
 
-to_merge(9)(0) <= from_edge(8);
-to_merge_req(9)(0) <= from_edge_req(8);
-from_edge_ack(8) <= to_merge_ack(9)(0);
+to_unary(8)(0) <= from_merge(8);
+to_unary_req(8)(0) <= from_merge_req(8);
+from_merge_ack(8) <= to_unary_ack(8)(0);
 
-to_merge(10)(0) <= from_edge(5);
-to_merge_req(10)(0) <= from_edge_req(5);
-from_edge_ack(5) <= to_merge_ack(10)(0);
+to_copy(9) <= from_unary(8)(0);
+to_copy_req(9) <= from_unary_req(8)(0);
+from_unary_ack(8)(0) <=to_copy_ack(9);
 
-to_merge(11)(0) <= from_edge(11);
-to_merge_req(11)(0) <= from_edge_req(11);
-from_edge_ack(11) <= to_merge_ack(11)(0);
+to_edge(16) <= from_copy(9)(0);
+to_edge_req(16) <= from_copy_req(9)(0);
+from_copy_ack(9)(0) <=to_edge_ack(16);
 
-to_ternary(1)(0) <= from_merge(9);
-to_ternary_req(1)(0) <= from_merge_req(9);
-from_merge_ack(9) <= to_ternary_ack(1)(0);
+to_edge(17) <= from_copy(9)(1);
+to_edge_req(17) <= from_copy_req(9)(1);
+from_copy_ack(9)(1) <=to_edge_ack(17);
 
-to_ternary(1)(1) <= from_merge(10);
-to_ternary_req(1)(1) <= from_merge_req(10);
-from_merge_ack(10) <= to_ternary_ack(1)(1);
+to_merge(9)(0) <= from_edge(12);
+to_merge_req(9)(0) <= from_edge_req(12);
+from_edge_ack(12) <= to_merge_ack(9)(0);
 
-to_ternary(1)(2) <= from_merge(11);
-to_ternary_req(1)(2) <= from_merge_req(11);
-from_merge_ack(11) <= to_ternary_ack(1)(2);
+to_merge(10)(0) <= from_edge(6);
+to_merge_req(10)(0) <= from_edge_req(6);
+from_edge_ack(6) <= to_merge_ack(10)(0);
 
-to_copy(8) <= from_ternary(1)(0);
-to_copy_req(8) <= from_ternary_req(1)(0);
-from_ternary_ack(1)(0) <=to_copy_ack(8);
+to_merge(11)(0) <= from_edge(14);
+to_merge_req(11)(0) <= from_edge_req(14);
+from_edge_ack(14) <= to_merge_ack(11)(0);
 
-to_edge(16) <= from_copy(8)(0);
-to_edge_req(16) <= from_copy_req(8)(0);
-from_copy_ack(8)(0) <=to_edge_ack(16);
+to_ternary(0)(0) <= from_merge(9);
+to_ternary_req(0)(0) <= from_merge_req(9);
+from_merge_ack(9) <= to_ternary_ack(0)(0);
 
-to_merge(12)(0) <= from_edge(10);
-to_merge_req(12)(0) <= from_edge_req(10);
-from_edge_ack(10) <= to_merge_ack(12)(0);
+to_ternary(0)(1) <= from_merge(10);
+to_ternary_req(0)(1) <= from_merge_req(10);
+from_merge_ack(10) <= to_ternary_ack(0)(1);
 
-to_merge(13)(0) <= from_edge(15);
-to_merge_req(13)(0) <= from_edge_req(15);
-from_edge_ack(15) <= to_merge_ack(13)(0);
+to_ternary(0)(2) <= from_merge(11);
+to_ternary_req(0)(2) <= from_merge_req(11);
+from_merge_ack(11) <= to_ternary_ack(0)(2);
 
-to_merge(14)(0) <= from_edge(16);
-to_merge_req(14)(0) <= from_edge_req(16);
-from_edge_ack(16) <= to_merge_ack(14)(0);
-
-to_ternary(2)(0) <= from_merge(12);
-to_ternary_req(2)(0) <= from_merge_req(12);
-from_merge_ack(12) <= to_ternary_ack(2)(0);
-
-to_ternary(2)(1) <= from_merge(13);
-to_ternary_req(2)(1) <= from_merge_req(13);
-from_merge_ack(13) <= to_ternary_ack(2)(1);
-
-to_ternary(2)(2) <= from_merge(14);
-to_ternary_req(2)(2) <= from_merge_req(14);
-from_merge_ack(14) <= to_ternary_ack(2)(2);
-
-to_copy(9) <= from_ternary(2)(0);
-to_copy_req(9) <= from_ternary_req(2)(0);
-from_ternary_ack(2)(0) <=to_copy_ack(9);
-
-to_edge(17) <= from_copy(9)(0);
-to_edge_req(17) <= from_copy_req(9)(0);
-from_copy_ack(9)(0) <=to_edge_ack(17);
-
-to_merge(15)(0) <= from_edge(17);
-to_merge_req(15)(0) <= from_edge_req(17);
-from_edge_ack(17) <= to_merge_ack(15)(0);
-
-to_unary(6)(0) <= from_merge(15);
-to_unary_req(6)(0) <= from_merge_req(15);
-from_merge_ack(15) <= to_unary_ack(6)(0);
-
-to_copy(10) <= from_unary(6)(0);
-to_copy_req(10) <= from_unary_req(6)(0);
-from_unary_ack(6)(0) <=to_copy_ack(10);
+to_copy(10) <= from_ternary(0)(0);
+to_copy_req(10) <= from_ternary_req(0)(0);
+from_ternary_ack(0)(0) <=to_copy_ack(10);
 
 to_edge(18) <= from_copy(10)(0);
 to_edge_req(18) <= from_copy_req(10)(0);
 from_copy_ack(10)(0) <=to_edge_ack(18);
 
-to_edge(19) <= from_copy(10)(1);
-to_edge_req(19) <= from_copy_req(10)(1);
-from_copy_ack(10)(1) <=to_edge_ack(19);
+to_merge(12)(0) <= from_edge(16);
+to_merge_req(12)(0) <= from_edge_req(16);
+from_edge_ack(16) <= to_merge_ack(12)(0);
+
+to_merge(13)(0) <= from_edge(5);
+to_merge_req(13)(0) <= from_edge_req(5);
+from_edge_ack(5) <= to_merge_ack(13)(0);
+
+to_merge(14)(0) <= from_edge(11);
+to_merge_req(14)(0) <= from_edge_req(11);
+from_edge_ack(11) <= to_merge_ack(14)(0);
+
+to_ternary(1)(0) <= from_merge(12);
+to_ternary_req(1)(0) <= from_merge_req(12);
+from_merge_ack(12) <= to_ternary_ack(1)(0);
+
+to_ternary(1)(1) <= from_merge(13);
+to_ternary_req(1)(1) <= from_merge_req(13);
+from_merge_ack(13) <= to_ternary_ack(1)(1);
+
+to_ternary(1)(2) <= from_merge(14);
+to_ternary_req(1)(2) <= from_merge_req(14);
+from_merge_ack(14) <= to_ternary_ack(1)(2);
+
+to_copy(11) <= from_ternary(1)(0);
+to_copy_req(11) <= from_ternary_req(1)(0);
+from_ternary_ack(1)(0) <=to_copy_ack(11);
+
+to_edge(19) <= from_copy(11)(0);
+to_edge_req(19) <= from_copy_req(11)(0);
+from_copy_ack(11)(0) <=to_edge_ack(19);
+
+to_merge(15)(0) <= from_edge(15);
+to_merge_req(15)(0) <= from_edge_req(15);
+from_edge_ack(15) <= to_merge_ack(15)(0);
 
 to_merge(16)(0) <= from_edge(18);
 to_merge_req(16)(0) <= from_edge_req(18);
 from_edge_ack(18) <= to_merge_ack(16)(0);
 
-to_merge(16)(1) <= from_edge(19);
-to_merge_req(16)(1) <= from_edge_req(19);
-from_edge_ack(19) <= to_merge_ack(16)(1);
+to_merge(17)(0) <= from_edge(19);
+to_merge_req(17)(0) <= from_edge_req(19);
+from_edge_ack(19) <= to_merge_ack(17)(0);
 
-to_unary(7)(0) <= from_merge(16);
-to_unary_req(7)(0) <= from_merge_req(16);
-from_merge_ack(16) <= to_unary_ack(7)(0);
+to_ternary(2)(0) <= from_merge(15);
+to_ternary_req(2)(0) <= from_merge_req(15);
+from_merge_ack(15) <= to_ternary_ack(2)(0);
 
-to_unary(7)(0) <= from_merge(16);
-to_unary_req(7)(0) <= from_merge_req(16);
-from_merge_ack(16) <= to_unary_ack(7)(0);
+to_ternary(2)(1) <= from_merge(16);
+to_ternary_req(2)(1) <= from_merge_req(16);
+from_merge_ack(16) <= to_ternary_ack(2)(1);
 
-to_copy(11) <= from_unary(7)(0);
-to_copy_req(11) <= from_unary_req(7)(0);
-from_unary_ack(7)(0) <=to_copy_ack(11);
+to_ternary(2)(2) <= from_merge(17);
+to_ternary_req(2)(2) <= from_merge_req(17);
+from_merge_ack(17) <= to_ternary_ack(2)(2);
 
-to_edge(20) <= from_copy(11)(0);
-to_edge_req(20) <= from_copy_req(11)(0);
-from_copy_ack(11)(0) <=to_edge_ack(20);
+to_copy(12) <= from_ternary(2)(0);
+to_copy_req(12) <= from_ternary_req(2)(0);
+from_ternary_ack(2)(0) <=to_copy_ack(12);
 
-to_edge(21) <= from_copy(11)(1);
-to_edge_req(21) <= from_copy_req(11)(1);
-from_copy_ack(11)(1) <=to_edge_ack(21);
+to_edge(20) <= from_copy(12)(0);
+to_edge_req(20) <= from_copy_req(12)(0);
+from_copy_ack(12)(0) <=to_edge_ack(20);
 
-to_edge(22) <= from_copy(11)(2);
-to_edge_req(22) <= from_copy_req(11)(2);
-from_copy_ack(11)(2) <=to_edge_ack(22);
-
-to_merge(17)(0) <= from_edge(20);
-to_merge_req(17)(0) <= from_edge_req(20);
-from_edge_ack(20) <= to_merge_ack(17)(0);
-
-to_merge(17)(1) <= from_edge(21);
-to_merge_req(17)(1) <= from_edge_req(21);
-from_edge_ack(21) <= to_merge_ack(17)(1);
-
-to_unary(8)(0) <= from_merge(17);
-to_unary_req(8)(0) <= from_merge_req(17);
-from_merge_ack(17) <= to_unary_ack(8)(0);
-
-to_unary(8)(0) <= from_merge(17);
-to_unary_req(8)(0) <= from_merge_req(17);
-from_merge_ack(17) <= to_unary_ack(8)(0);
-
-to_copy(12) <= from_unary(8)(0);
-to_copy_req(12) <= from_unary_req(8)(0);
-from_unary_ack(8)(0) <=to_copy_ack(12);
-
-to_edge(23) <= from_copy(12)(0);
-to_edge_req(23) <= from_copy_req(12)(0);
-from_copy_ack(12)(0) <=to_edge_ack(23);
-
-to_merge(18)(0) <= from_edge(22);
-to_merge_req(18)(0) <= from_edge_req(22);
-from_edge_ack(22) <= to_merge_ack(18)(0);
-
-to_merge(18)(1) <= from_edge(23);
-to_merge_req(18)(1) <= from_edge_req(23);
-from_edge_ack(23) <= to_merge_ack(18)(1);
-
-to_unary(9)(0) <= from_merge(18);
-to_unary_req(9)(0) <= from_merge_req(18);
-from_merge_ack(18) <= to_unary_ack(9)(0);
+to_merge(18)(0) <= from_edge(20);
+to_merge_req(18)(0) <= from_edge_req(20);
+from_edge_ack(20) <= to_merge_ack(18)(0);
 
 to_unary(9)(0) <= from_merge(18);
 to_unary_req(9)(0) <= from_merge_req(18);
@@ -443,17 +407,25 @@ to_copy(13) <= from_unary(9)(0);
 to_copy_req(13) <= from_unary_req(9)(0);
 from_unary_ack(9)(0) <=to_copy_ack(13);
 
-to_edge(24) <= from_copy(13)(0);
-to_edge_req(24) <= from_copy_req(13)(0);
-from_copy_ack(13)(0) <=to_edge_ack(24);
+to_edge(21) <= from_copy(13)(0);
+to_edge_req(21) <= from_copy_req(13)(0);
+from_copy_ack(13)(0) <=to_edge_ack(21);
 
-to_edge(25) <= from_copy(13)(1);
-to_edge_req(25) <= from_copy_req(13)(1);
-from_copy_ack(13)(1) <=to_edge_ack(25);
+to_edge(22) <= from_copy(13)(1);
+to_edge_req(22) <= from_copy_req(13)(1);
+from_copy_ack(13)(1) <=to_edge_ack(22);
 
-to_merge(19)(0) <= from_edge(25);
-to_merge_req(19)(0) <= from_edge_req(25);
-from_edge_ack(25) <= to_merge_ack(19)(0);
+to_merge(19)(0) <= from_edge(21);
+to_merge_req(19)(0) <= from_edge_req(21);
+from_edge_ack(21) <= to_merge_ack(19)(0);
+
+to_merge(19)(1) <= from_edge(22);
+to_merge_req(19)(1) <= from_edge_req(22);
+from_edge_ack(22) <= to_merge_ack(19)(1);
+
+to_unary(10)(0) <= from_merge(19);
+to_unary_req(10)(0) <= from_merge_req(19);
+from_merge_ack(19) <= to_unary_ack(10)(0);
 
 to_unary(10)(0) <= from_merge(19);
 to_unary_req(10)(0) <= from_merge_req(19);
@@ -463,13 +435,29 @@ to_copy(14) <= from_unary(10)(0);
 to_copy_req(14) <= from_unary_req(10)(0);
 from_unary_ack(10)(0) <=to_copy_ack(14);
 
-to_edge(26) <= from_copy(14)(0);
-to_edge_req(26) <= from_copy_req(14)(0);
-from_copy_ack(14)(0) <=to_edge_ack(26);
+to_edge(23) <= from_copy(14)(0);
+to_edge_req(23) <= from_copy_req(14)(0);
+from_copy_ack(14)(0) <=to_edge_ack(23);
 
-to_merge(20)(0) <= from_edge(24);
-to_merge_req(20)(0) <= from_edge_req(24);
-from_edge_ack(24) <= to_merge_ack(20)(0);
+to_edge(24) <= from_copy(14)(1);
+to_edge_req(24) <= from_copy_req(14)(1);
+from_copy_ack(14)(1) <=to_edge_ack(24);
+
+to_edge(25) <= from_copy(14)(2);
+to_edge_req(25) <= from_copy_req(14)(2);
+from_copy_ack(14)(2) <=to_edge_ack(25);
+
+to_merge(20)(0) <= from_edge(23);
+to_merge_req(20)(0) <= from_edge_req(23);
+from_edge_ack(23) <= to_merge_ack(20)(0);
+
+to_merge(20)(1) <= from_edge(24);
+to_merge_req(20)(1) <= from_edge_req(24);
+from_edge_ack(24) <= to_merge_ack(20)(1);
+
+to_unary(11)(0) <= from_merge(20);
+to_unary_req(11)(0) <= from_merge_req(20);
+from_merge_ack(20) <= to_unary_ack(11)(0);
 
 to_unary(11)(0) <= from_merge(20);
 to_unary_req(11)(0) <= from_merge_req(20);
@@ -479,13 +467,21 @@ to_copy(15) <= from_unary(11)(0);
 to_copy_req(15) <= from_unary_req(11)(0);
 from_unary_ack(11)(0) <=to_copy_ack(15);
 
-to_edge(27) <= from_copy(15)(0);
-to_edge_req(27) <= from_copy_req(15)(0);
-from_copy_ack(15)(0) <=to_edge_ack(27);
+to_edge(26) <= from_copy(15)(0);
+to_edge_req(26) <= from_copy_req(15)(0);
+from_copy_ack(15)(0) <=to_edge_ack(26);
 
-to_merge(21)(0) <= from_edge(27);
-to_merge_req(21)(0) <= from_edge_req(27);
-from_edge_ack(27) <= to_merge_ack(21)(0);
+to_merge(21)(0) <= from_edge(25);
+to_merge_req(21)(0) <= from_edge_req(25);
+from_edge_ack(25) <= to_merge_ack(21)(0);
+
+to_merge(21)(1) <= from_edge(26);
+to_merge_req(21)(1) <= from_edge_req(26);
+from_edge_ack(26) <= to_merge_ack(21)(1);
+
+to_unary(12)(0) <= from_merge(21);
+to_unary_req(12)(0) <= from_merge_req(21);
+from_merge_ack(21) <= to_unary_ack(12)(0);
 
 to_unary(12)(0) <= from_merge(21);
 to_unary_req(12)(0) <= from_merge_req(21);
@@ -495,89 +491,141 @@ to_copy(16) <= from_unary(12)(0);
 to_copy_req(16) <= from_unary_req(12)(0);
 from_unary_ack(12)(0) <=to_copy_ack(16);
 
-to_edge(28) <= from_copy(16)(0);
-to_edge_req(28) <= from_copy_req(16)(0);
-from_copy_ack(16)(0) <=to_edge_ack(28);
+to_edge(27) <= from_copy(16)(0);
+to_edge_req(27) <= from_copy_req(16)(0);
+from_copy_ack(16)(0) <=to_edge_ack(27);
 
-to_edge(29) <= from_copy(16)(1);
-to_edge_req(29) <= from_copy_req(16)(1);
-from_copy_ack(16)(1) <=to_edge_ack(29);
+to_edge(28) <= from_copy(16)(1);
+to_edge_req(28) <= from_copy_req(16)(1);
+from_copy_ack(16)(1) <=to_edge_ack(28);
 
-to_merge(22)(0) <= from_edge(13);
-to_merge_req(22)(0) <= from_edge_req(13);
-from_edge_ack(13) <= to_merge_ack(22)(0);
+to_merge(22)(0) <= from_edge(28);
+to_merge_req(22)(0) <= from_edge_req(28);
+from_edge_ack(28) <= to_merge_ack(22)(0);
 
-to_merge(23)(0) <= from_edge(26);
-to_merge_req(23)(0) <= from_edge_req(26);
-from_edge_ack(26) <= to_merge_ack(23)(0);
+to_unary(13)(0) <= from_merge(22);
+to_unary_req(13)(0) <= from_merge_req(22);
+from_merge_ack(22) <= to_unary_ack(13)(0);
 
-to_merge(24)(0) <= from_edge(28);
-to_merge_req(24)(0) <= from_edge_req(28);
-from_edge_ack(28) <= to_merge_ack(24)(0);
+to_copy(17) <= from_unary(13)(0);
+to_copy_req(17) <= from_unary_req(13)(0);
+from_unary_ack(13)(0) <=to_copy_ack(17);
 
-to_ternary(3)(0) <= from_merge(22);
-to_ternary_req(3)(0) <= from_merge_req(22);
-from_merge_ack(22) <= to_ternary_ack(3)(0);
+to_edge(29) <= from_copy(17)(0);
+to_edge_req(29) <= from_copy_req(17)(0);
+from_copy_ack(17)(0) <=to_edge_ack(29);
 
-to_ternary(3)(1) <= from_merge(23);
-to_ternary_req(3)(1) <= from_merge_req(23);
-from_merge_ack(23) <= to_ternary_ack(3)(1);
+to_merge(23)(0) <= from_edge(27);
+to_merge_req(23)(0) <= from_edge_req(27);
+from_edge_ack(27) <= to_merge_ack(23)(0);
 
-to_ternary(3)(2) <= from_merge(24);
-to_ternary_req(3)(2) <= from_merge_req(24);
-from_merge_ack(24) <= to_ternary_ack(3)(2);
+to_unary(14)(0) <= from_merge(23);
+to_unary_req(14)(0) <= from_merge_req(23);
+from_merge_ack(23) <= to_unary_ack(14)(0);
 
-to_copy(17) <= from_ternary(3)(0);
-to_copy_req(17) <= from_ternary_req(3)(0);
-from_ternary_ack(3)(0) <=to_copy_ack(17);
+to_copy(18) <= from_unary(14)(0);
+to_copy_req(18) <= from_unary_req(14)(0);
+from_unary_ack(14)(0) <=to_copy_ack(18);
 
-to_edge(30) <= from_copy(17)(0);
-to_edge_req(30) <= from_copy_req(17)(0);
-from_copy_ack(17)(0) <=to_edge_ack(30);
+to_edge(30) <= from_copy(18)(0);
+to_edge_req(30) <= from_copy_req(18)(0);
+from_copy_ack(18)(0) <=to_edge_ack(30);
 
-to_merge(25)(0) <= from_edge(14);
-to_merge_req(25)(0) <= from_edge_req(14);
-from_edge_ack(14) <= to_merge_ack(25)(0);
+to_merge(24)(0) <= from_edge(30);
+to_merge_req(24)(0) <= from_edge_req(30);
+from_edge_ack(30) <= to_merge_ack(24)(0);
+
+to_unary(15)(0) <= from_merge(24);
+to_unary_req(15)(0) <= from_merge_req(24);
+from_merge_ack(24) <= to_unary_ack(15)(0);
+
+to_copy(19) <= from_unary(15)(0);
+to_copy_req(19) <= from_unary_req(15)(0);
+from_unary_ack(15)(0) <=to_copy_ack(19);
+
+to_edge(31) <= from_copy(19)(0);
+to_edge_req(31) <= from_copy_req(19)(0);
+from_copy_ack(19)(0) <=to_edge_ack(31);
+
+to_edge(32) <= from_copy(19)(1);
+to_edge_req(32) <= from_copy_req(19)(1);
+from_copy_ack(19)(1) <=to_edge_ack(32);
+
+to_merge(25)(0) <= from_edge(17);
+to_merge_req(25)(0) <= from_edge_req(17);
+from_edge_ack(17) <= to_merge_ack(25)(0);
 
 to_merge(26)(0) <= from_edge(29);
 to_merge_req(26)(0) <= from_edge_req(29);
 from_edge_ack(29) <= to_merge_ack(26)(0);
 
-to_merge(27)(0) <= from_edge(30);
-to_merge_req(27)(0) <= from_edge_req(30);
-from_edge_ack(30) <= to_merge_ack(27)(0);
+to_merge(27)(0) <= from_edge(31);
+to_merge_req(27)(0) <= from_edge_req(31);
+from_edge_ack(31) <= to_merge_ack(27)(0);
 
-to_ternary(4)(0) <= from_merge(25);
-to_ternary_req(4)(0) <= from_merge_req(25);
-from_merge_ack(25) <= to_ternary_ack(4)(0);
+to_ternary(3)(0) <= from_merge(25);
+to_ternary_req(3)(0) <= from_merge_req(25);
+from_merge_ack(25) <= to_ternary_ack(3)(0);
 
-to_ternary(4)(1) <= from_merge(26);
-to_ternary_req(4)(1) <= from_merge_req(26);
-from_merge_ack(26) <= to_ternary_ack(4)(1);
+to_ternary(3)(1) <= from_merge(26);
+to_ternary_req(3)(1) <= from_merge_req(26);
+from_merge_ack(26) <= to_ternary_ack(3)(1);
 
-to_ternary(4)(2) <= from_merge(27);
-to_ternary_req(4)(2) <= from_merge_req(27);
-from_merge_ack(27) <= to_ternary_ack(4)(2);
+to_ternary(3)(2) <= from_merge(27);
+to_ternary_req(3)(2) <= from_merge_req(27);
+from_merge_ack(27) <= to_ternary_ack(3)(2);
 
-to_copy(18) <= from_ternary(4)(0);
-to_copy_req(18) <= from_ternary_req(4)(0);
-from_ternary_ack(4)(0) <=to_copy_ack(18);
+to_copy(20) <= from_ternary(3)(0);
+to_copy_req(20) <= from_ternary_req(3)(0);
+from_ternary_ack(3)(0) <=to_copy_ack(20);
 
-to_edge(31) <= from_copy(18)(0);
-to_edge_req(31) <= from_copy_req(18)(0);
-from_copy_ack(18)(0) <=to_edge_ack(31);
+to_edge(33) <= from_copy(20)(0);
+to_edge_req(33) <= from_copy_req(20)(0);
+from_copy_ack(20)(0) <=to_edge_ack(33);
 
-to_merge(28)(0) <= from_edge(31);
-to_merge_req(28)(0) <= from_edge_req(31);
-from_edge_ack(31) <= to_merge_ack(28)(0);
+to_merge(28)(0) <= from_edge(13);
+to_merge_req(28)(0) <= from_edge_req(13);
+from_edge_ack(13) <= to_merge_ack(28)(0);
 
-to_unary(13)(0) <= from_merge(28);
-to_unary_req(13)(0) <= from_merge_req(28);
-from_merge_ack(28) <= to_unary_ack(13)(0);
+to_merge(29)(0) <= from_edge(32);
+to_merge_req(29)(0) <= from_edge_req(32);
+from_edge_ack(32) <= to_merge_ack(29)(0);
 
-to_external(0) <= from_unary(13)(0);
-to_external_req(0) <= from_unary_req(13)(0);
-from_unary_ack(13)(0) <=to_external_ack(0);
+to_merge(30)(0) <= from_edge(33);
+to_merge_req(30)(0) <= from_edge_req(33);
+from_edge_ack(33) <= to_merge_ack(30)(0);
+
+to_ternary(4)(0) <= from_merge(28);
+to_ternary_req(4)(0) <= from_merge_req(28);
+from_merge_ack(28) <= to_ternary_ack(4)(0);
+
+to_ternary(4)(1) <= from_merge(29);
+to_ternary_req(4)(1) <= from_merge_req(29);
+from_merge_ack(29) <= to_ternary_ack(4)(1);
+
+to_ternary(4)(2) <= from_merge(30);
+to_ternary_req(4)(2) <= from_merge_req(30);
+from_merge_ack(30) <= to_ternary_ack(4)(2);
+
+to_copy(21) <= from_ternary(4)(0);
+to_copy_req(21) <= from_ternary_req(4)(0);
+from_ternary_ack(4)(0) <=to_copy_ack(21);
+
+to_edge(34) <= from_copy(21)(0);
+to_edge_req(34) <= from_copy_req(21)(0);
+from_copy_ack(21)(0) <=to_edge_ack(34);
+
+to_merge(31)(0) <= from_edge(34);
+to_merge_req(31)(0) <= from_edge_req(34);
+from_edge_ack(34) <= to_merge_ack(31)(0);
+
+to_unary(16)(0) <= from_merge(31);
+to_unary_req(16)(0) <= from_merge_req(31);
+from_merge_ack(31) <= to_unary_ack(16)(0);
+
+to_external(0) <= from_unary(16)(0);
+to_external_req(0) <= from_unary_req(16)(0);
+from_unary_ack(16)(0) <=to_external_ack(0);
 
 -- DONE
 
@@ -833,7 +881,6 @@ from_unary_ack(13)(0) <=to_external_ack(0);
                     out_ack => from_unary_ack(i)(0)
                      );
                  end generate;
-        -- REMOVED BECAUSE OF CIRCULAR REFERENCE
         --GENERATE_COSINE : if (UNARY_TYPES(i) = cosine) generate
             --cosine : bg_cosine
             --port map (
