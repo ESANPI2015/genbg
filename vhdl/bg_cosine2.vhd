@@ -26,8 +26,15 @@ end bg_cosine;
 architecture Behavioral of bg_cosine is
 
     -- Add types here
-    type NodeStates is (idle, 
+    type NodeStates is (
+                        idle, 
                         new_data, 
+                        compute,
+                        data_out, 
+                        sync
+                    );
+    type CalcStates is (
+                        idle,
                         normalize,
                         normalize1,
                         normalize2,
@@ -41,11 +48,11 @@ architecture Behavioral of bg_cosine is
                         cosine3,
                         cosine4,
                         cosine5,
-                        fixsign,
-                        data_out, 
-                        sync);
+                        fixsign
+                    );
     -- Add signals here
     signal NodeState : NodeStates;
+    signal CalcState : CalcStates;
 
     signal internal_input_req : std_logic;
     signal internal_input_ack : std_logic;
@@ -53,7 +60,7 @@ architecture Behavioral of bg_cosine is
     signal internal_output_ack : std_logic;
 
     signal din : std_logic_vector(DATA_WIDTH-1 downto 0);
-    signal cosval : std_logic_vector(DATA_WIDTH-1 downto 0);
+    signal dout : std_logic_vector(DATA_WIDTH-1 downto 0);
 
     -- FP stuff
     constant div_pi : std_logic_vector(DATA_WIDTH-1 downto 0) := x"3f22f983";
@@ -88,8 +95,10 @@ architecture Behavioral of bg_cosine is
     signal fp_trunc_result : std_logic_vector(DATA_WIDTH-1 downto 0);
     signal fp_trunc_start : std_logic;
     signal fp_trunc_rdy : std_logic;
-
     signal quadrant : unsigned(1 downto 0);
+
+    signal fp_finished : std_logic;
+    signal fp_start : std_logic;
 
 begin
     fp_div : entity work.fpu_div(rtl)
@@ -122,7 +131,7 @@ begin
                     ready_o => fp_mul_rdy
                  );
 
-    -- NOTE: we can get rid of add or sub, because negation is easy
+    -- NOTE: we can get rid of add or sub, because negation is easy, instead we could use an additional MUL :D
     fp_add : entity work.fpu_add(rtl)
         port map (
                     clk_i => clk,
@@ -151,16 +160,195 @@ begin
     internal_output_ack <= out_ack;
 
     -- get quadrant
-    process(din)
+    process(dout)
     begin
-        if (unsigned(din(DATA_WIDTH-2 downto 0)) > unsigned(three(DATA_WIDTH-2 downto 0))) then -- greater 3
+        if (unsigned(dout(DATA_WIDTH-2 downto 0)) > unsigned(three(DATA_WIDTH-2 downto 0))) then -- greater 3
             quadrant <= "11";
-        elsif (unsigned(din(DATA_WIDTH-2 downto 0)) > unsigned(two(DATA_WIDTH-2 downto 0))) then -- greater 2
+        elsif (unsigned(dout(DATA_WIDTH-2 downto 0)) > unsigned(two(DATA_WIDTH-2 downto 0))) then -- greater 2
             quadrant <= "10";
-        elsif (unsigned(din(DATA_WIDTH-2 downto 0)) > unsigned(one(DATA_WIDTH-2 downto 0))) then -- greater 1
+        elsif (unsigned(dout(DATA_WIDTH-2 downto 0)) > unsigned(one(DATA_WIDTH-2 downto 0))) then -- greater 1
             quadrant <= "01";
         else
             quadrant <= "00";
+        end if;
+    end process;
+
+    -- cosine calculation
+    process(clk)
+    begin
+        if clk'event and clk = '1' then
+            if rst = '1' then
+                fp_finished <= '0';
+                fp_div_start <= '0';
+                fp_mul_start <= '0';
+                fp_add_start <= '0';
+                fp_sub_start <= '0';
+                fp_trunc_start <= '0';
+                dout <= (others => '0');
+                CalcState <= idle;
+            else
+                -- defaults
+                fp_div_start <= '0';
+                fp_mul_start <= '0';
+                fp_add_start <= '0';
+                fp_sub_start <= '0';
+                fp_trunc_start <= '0';
+                fp_finished <= '0';
+                case CalcState is
+                    when idle =>
+                        fp_finished <= '1';
+                        if (fp_start = '1') then
+                            -- start first calc (|x|*2/pi)
+                            fp_mul_opa <= "0" & din(DATA_WIDTH-2 downto 0);
+                            fp_mul_opb <= div_pi; -- 2/pi
+                            fp_mul_start <= '1';
+                            fp_finished <= '0';
+                            CalcState <= normalize;
+                        else
+                            CalcState <= idle;
+                        end if;
+                    when normalize =>
+                        if (fp_mul_rdy = '1') then
+                            -- start second calc (z/4)
+                            fp_div_opa <= fp_mul_result;
+                            fp_div_opb <= four; -- 4.0
+                            fp_div_start <= '1';
+                            dout <= fp_mul_result; -- store mul result (needed in normalize 4)
+                            CalcState <= normalize1;
+                        else
+                            CalcState <= normalize;
+                        end if;
+                    when normalize1 =>
+                        if (fp_div_rdy = '1') then
+                            --start third calc (trunc(z/4))
+                            fp_trunc_op <= fp_div_result;
+                            fp_trunc_start <= '1';
+                            CalcState <= normalize2;
+                        else
+                            CalcState <= normalize1;
+                        end if;
+                    when normalize2 =>
+                        if (fp_trunc_rdy = '1') then
+                            --start fourth calc (4 * trunc(z/4))
+                            fp_mul_opa <= fp_trunc_result;
+                            fp_mul_opb <= four; -- 4.0
+                            fp_mul_start <= '1';
+                            CalcState <= normalize3;
+                        else
+                            CalcState <= normalize2;
+                        end if;
+                    when normalize3 =>
+                        if (fp_mul_rdy = '1') then
+                            --start fifth calc (z - 4 * trunc(z/4))
+                            fp_sub_opa <= dout;
+                            fp_sub_opb <= fp_mul_result;
+                            fp_sub_start <= '1';
+                            CalcState <= normalize4;
+                        else
+                            CalcState <= normalize3;
+                        end if;
+                    when normalize4 =>
+                        if (fp_sub_rdy = '1') then
+                            dout <= fp_sub_result; -- store normalized value (now quadrant calc starts)
+                            CalcState <= normalize5;
+                        else
+                            CalcState <= normalize4;
+                        end if;
+                    when normalize5 =>
+                        CalcState <= normalize6;
+                        if (quadrant = 1) then
+                            fp_sub_opa <= two;
+                            fp_sub_opb <= dout;
+                            fp_sub_start <= '1';
+                        elsif (quadrant = 2) then
+                            fp_sub_opa <= dout;
+                            fp_sub_opb <= two;
+                            fp_sub_start <= '1';
+                        elsif (quadrant = 3) then
+                            fp_sub_opa <= four;
+                            fp_sub_opb <= dout;
+                            fp_sub_start <= '1';
+                        else
+                            fp_trunc_op <= dout;
+                            CalcState <= cosine; -- assumes the correct value in fp_trunc_op
+                        end if;
+                    when normalize6 =>
+                        if (fp_sub_rdy = '1') then
+                            fp_trunc_op <= fp_sub_result;
+                            CalcState <= cosine; -- assumes the correct value in fp_trunc_op
+                        else
+                            CalcState <= normalize6;
+                        end if;
+
+                    when cosine =>
+                        --calculate fp_trunc_op * fp_trunc_op
+                        fp_mul_opa <= fp_trunc_op;
+                        fp_mul_opb <= fp_trunc_op;
+                        fp_mul_start <= '1';
+                        CalcState <= cosine1;
+
+                    when cosine1 =>
+                        if (fp_mul_rdy = '1') then
+                            fp_trunc_op <= fp_mul_result; -- store z^2
+                            -- calculate cos_param1 * z^2
+                            fp_mul_opa <= cos_param1;
+                            fp_mul_opb <= fp_mul_result;
+                            fp_mul_start <= '1';
+                            CalcState <= cosine2;
+                        else
+                            CalcState <= cosine1;
+                        end if;
+                    when cosine2 =>
+                        if (fp_mul_rdy = '1') then
+                            -- calculate 1 - cos_param1*z^2
+                            fp_sub_opa <= one;
+                            fp_sub_opb <= fp_mul_result;
+                            fp_sub_start <= '1';
+                            -- calculate z^4
+                            fp_mul_opa <= fp_trunc_op;
+                            fp_mul_opb <= fp_trunc_op;
+                            fp_mul_start <= '1';
+                            CalcState <= cosine3;
+                        else
+                            CalcState <= cosine2;
+                        end if;
+                    when cosine3 =>
+                        if (fp_mul_rdy = '1') then -- mul is the slower op, so we just wait on it
+                            -- calculate cos_param2 * z^4
+                            fp_mul_opa <= cos_param2;
+                            fp_mul_opb <= fp_mul_result;
+                            fp_mul_start <= '1';
+                            CalcState <= cosine4;
+                        else
+                            CalcState <= cosine3;
+                        end if;
+                    when cosine4 =>
+                        if (fp_mul_rdy = '1') then
+                            -- calculate 1 - cos_param1*z^2 + cos_param2*z^4
+                            fp_add_opa <= fp_sub_result;
+                            fp_add_opb <= fp_mul_result;
+                            fp_add_start <= '1';
+                            CalcState <= cosine5;
+                        else
+                            CalcState <= cosine4;
+                        end if;
+                    when cosine5 =>
+                        if (fp_add_rdy = '1') then
+                            fp_trunc_op <= fp_add_result;
+                            CalcState <= fixsign;
+                        else
+                            CalcState <= cosine5;
+                        end if;
+                    when fixsign =>
+                        fp_finished <= '1';
+                        CalcState <= idle;
+                        if (quadrant = 1 or quadrant = 2) then
+                            dout <= "1"&fp_trunc_op(DATA_WIDTH-2 downto 0);
+                        else
+                            dout <= "0"&fp_trunc_op(DATA_WIDTH-2 downto 0);
+                        end if;
+                end case;
+            end if;
         end if;
     end process;
 
@@ -170,27 +358,18 @@ begin
             if rst = '1' then
                 internal_input_ack <= '0';
                 internal_output_req <= '0';
-                fp_div_start <= '0';
-                fp_mul_start <= '0';
-                fp_add_start <= '0';
-                fp_sub_start <= '0';
-                fp_trunc_start <= '0';
                 out_port <= (others => '0');
                 NodeState <= idle;
             else
-                fp_div_start <= '0';
-                fp_mul_start <= '0';
-                fp_add_start <= '0';
-                fp_sub_start <= '0';
-                fp_trunc_start <= '0';
                 if (halt = '0') then
                     -- defaults
                     case NodeState is
                         when idle =>
                             internal_input_ack <= '0';
                             internal_output_req <= '0';
-                            if (internal_input_req = '1') then
+                            if (internal_input_req = '1' and fp_finished='1') then
                                 din <= in_port;
+                                fp_start <= '1';
                                 internal_input_ack <= '1';
                                 NodeState <= new_data;
                             else
@@ -200,183 +379,20 @@ begin
                             internal_input_ack <= '1';
                             internal_output_req <= '0';
                             if (internal_input_req = '0') then
-                                -- start first calc (|x|*2/pi)
-                                fp_mul_opa <= "0" & din(DATA_WIDTH-2 downto 0);
-                                fp_mul_opb <= div_pi; -- 2/pi
-                                fp_mul_start <= '1';
                                 internal_input_ack <= '0';
-                                NodeState <= normalize;
+                                NodeState <= compute;
                             else
                                 NodeState <= new_data;
                             end if;
-                        when normalize =>
+                        when compute =>
                             internal_input_ack <= '0';
                             internal_output_req <= '0';
-                            if (fp_mul_rdy = '1') then
-                                -- start second calc (z/4)
-                                fp_div_opa <= fp_mul_result;
-                                fp_div_opb <= four; -- 4.0
-                                fp_div_start <= '1';
-                                din <= fp_mul_result; -- store mul result (needed in normalize 4)
-                                NodeState <= normalize1;
+                            if (fp_finished = '1') then
+                                out_port <= dout;
+                                NodeState <= data_out;
                             else
-                                NodeState <= normalize;
+                                NodeState <= compute;
                             end if;
-                        when normalize1 =>
-                            internal_input_ack <= '0';
-                            internal_output_req <= '0';
-                            if (fp_div_rdy = '1') then
-                                --start third calc (trunc(z/4))
-                                fp_trunc_op <= fp_div_result;
-                                fp_trunc_start <= '1';
-                                NodeState <= normalize2;
-                            else
-                                NodeState <= normalize1;
-                            end if;
-                        when normalize2 =>
-                            internal_input_ack <= '0';
-                            internal_output_req <= '0';
-                            if (fp_trunc_rdy = '1') then
-                                --start fourth calc (4 * trunc(z/4))
-                                fp_mul_opa <= fp_trunc_result;
-                                fp_mul_opb <= four; -- 4.0
-                                fp_mul_start <= '1';
-                                NodeState <= normalize3;
-                            else
-                                NodeState <= normalize2;
-                            end if;
-                        when normalize3 =>
-                            internal_input_ack <= '0';
-                            internal_output_req <= '0';
-                            if (fp_mul_rdy = '1') then
-                                --start fifth calc (z - 4 * trunc(z/4))
-                                fp_sub_opa <= din;
-                                fp_sub_opb <= fp_mul_result;
-                                fp_sub_start <= '1';
-                                NodeState <= normalize4;
-                            else
-                                NodeState <= normalize3;
-                            end if;
-                        when normalize4 =>
-                            internal_input_ack <= '0';
-                            internal_output_req <= '0';
-                            if (fp_sub_rdy = '1') then
-                                din <= fp_sub_result; -- store normalized value (now quadrant calc starts)
-                                NodeState <= normalize5;
-                            else
-                                NodeState <= normalize4;
-                            end if;
-                        when normalize5 =>
-                            internal_input_ack <= '0';
-                            internal_output_req <= '0';
-                            NodeState <= normalize6;
-                            if (quadrant = 1) then
-                                fp_sub_opa <= two;
-                                fp_sub_opb <= din;
-                                fp_sub_start <= '1';
-                            elsif (quadrant = 2) then
-                                fp_sub_opa <= din;
-                                fp_sub_opb <= two;
-                                fp_sub_start <= '1';
-                            elsif (quadrant = 3) then
-                                fp_sub_opa <= four;
-                                fp_sub_opb <= din;
-                                fp_sub_start <= '1';
-                            else
-                                cosval <= din;
-                                NodeState <= cosine; -- assumes the correct value in cosval
-                            end if;
-                        when normalize6 =>
-                            internal_input_ack <= '0';
-                            internal_output_req <= '0';
-                            if (fp_sub_rdy = '1') then
-                                cosval <= fp_sub_result;
-                                NodeState <= cosine; -- assumes the correct value in cosval
-                            else
-                                NodeState <= normalize6;
-                            end if;
-
-                        when cosine =>
-                            internal_input_ack <= '0';
-                            internal_output_req <= '0';
-                            --calculate cosval * cosval
-                            fp_mul_opa <= cosval;
-                            fp_mul_opb <= cosval;
-                            fp_mul_start <= '1';
-                            NodeState <= cosine1;
-
-                        when cosine1 =>
-                            internal_input_ack <= '0';
-                            internal_output_req <= '0';
-                            if (fp_mul_rdy = '1') then
-                                cosval <= fp_mul_result; -- store z^2
-                                -- calculate cos_param1 * z^2
-                                fp_mul_opa <= cos_param1;
-                                fp_mul_opb <= fp_mul_result;
-                                fp_mul_start <= '1';
-                                NodeState <= cosine2;
-                            else
-                                NodeState <= cosine1;
-                            end if;
-                        when cosine2 =>
-                            internal_input_ack <= '0';
-                            internal_output_req <= '0';
-                            if (fp_mul_rdy = '1') then
-                                -- calculate 1 - cos_param1*z^2
-                                fp_sub_opa <= one;
-                                fp_sub_opb <= fp_mul_result;
-                                fp_sub_start <= '1';
-                                -- calculate z^4
-                                fp_mul_opa <= cosval;
-                                fp_mul_opb <= cosval;
-                                fp_mul_start <= '1';
-                                NodeState <= cosine3;
-                            else
-                                NodeState <= cosine2;
-                            end if;
-                        when cosine3 =>
-                            internal_input_ack <= '0';
-                            internal_output_req <= '0';
-                            if (fp_mul_rdy = '1') then -- mul is the slower op, so we just wait on it
-                                -- calculate cos_param2 * z^4
-                                fp_mul_opa <= cos_param2;
-                                fp_mul_opb <= fp_mul_result;
-                                fp_mul_start <= '1';
-                                NodeState <= cosine4;
-                            else
-                                NodeState <= cosine3;
-                            end if;
-                        when cosine4 =>
-                            internal_input_ack <= '0';
-                            internal_output_req <= '0';
-                            if (fp_mul_rdy = '1') then
-                                -- calculate 1 - cos_param1*z^2 + cos_param2*z^4
-                                fp_add_opa <= fp_sub_result;
-                                fp_add_opb <= fp_mul_result;
-                                fp_add_start <= '1';
-                                NodeState <= cosine5;
-                            else
-                                NodeState <= cosine4;
-                            end if;
-                        when cosine5 =>
-                            internal_input_ack <= '0';
-                            internal_output_req <= '0';
-                            if (fp_add_rdy = '1') then
-                                cosval <= fp_add_result;
-                                NodeState <= fixsign;
-                            else
-                                NodeState <= cosine5;
-                            end if;
-                        when fixsign =>
-                            internal_input_ack <= '0';
-                            internal_output_req <= '0';
-                            NodeState <= data_out;
-                            if (quadrant = 1 or quadrant = 2) then
-                                out_port <= "1"&cosval(DATA_WIDTH-2 downto 0);
-                            else
-                                out_port <= "0"&cosval(DATA_WIDTH-2 downto 0);
-                            end if;
-
                         when data_out =>
                             internal_input_ack <= '0';
                             internal_output_req <= '1';
