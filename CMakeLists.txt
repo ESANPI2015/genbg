@@ -36,11 +36,13 @@ set(SOURCES_C
 set(SOURCES_VHDL
     src/bg_generate_vhdl.c
     src/template_engine.c
+    src/float_to_std.c
     )
 set(HEADERS
     include/bg_generate_vhdl.h
     include/bg_generate_c.h
     include/template_engine.h
+    include/float_to_std.h
     )
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/")

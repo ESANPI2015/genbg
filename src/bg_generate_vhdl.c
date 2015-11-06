@@ -7,12 +7,7 @@
 #include <string.h>
 #include <time.h>
 #include "template_engine.h"
-
-static void floatToStdLogicVec(char *result, const float value)
-{
-    unsigned char *ptr = (unsigned char *)&value;
-    sprintf(result, "x\"%.2x%.2x%.2x%.2x\"", ptr[3], ptr[2], ptr[1], ptr[0]);
-}
+#include "float_to_std.h"
 
 /*This function generates dictionary entries for a connection between an output of a component and an input of an component*/
 static void addConnection(bg_generator_t *g, const char* from, const unsigned int fidx, const int foutput, const char *to, const unsigned int tidx, const int tinput)
