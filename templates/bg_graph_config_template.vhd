@@ -73,7 +73,7 @@ package bg_graph_@name@_config is
     ----
     type unary_ports_t is array (NO_UNARY-1 downto 0) of DATA_PORT(0 downto 0);
     type unary_signals_t is array (NO_UNARY-1 downto 0) of DATA_SIGNAL(0 downto 0);
-    type unary_type_t is (none, pipe, div, sqrt, absolute, cosine);
+    type unary_type_t is (none, pipe, div, sqrt, absolute, cosine, sine, tan);
     type unary_types_t is array (NO_UNARY downto 0) of unary_type_t;
     constant UNARY_TYPES : unary_types_t :=
     (

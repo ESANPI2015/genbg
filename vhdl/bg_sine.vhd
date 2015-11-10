@@ -6,7 +6,7 @@ library work;
 use work.bg_vhdl_types.all;
 -- Add additional libraries here
 
-entity bg_cosine is
+entity bg_sine is
     port(
     -- Inputs
         in_port : in std_logic_vector(DATA_WIDTH-1 downto 0);
@@ -21,9 +21,9 @@ entity bg_cosine is
         rst : in std_logic;
         clk : in std_logic
         );
-end bg_cosine;
+end bg_sine;
 
-architecture Behavioral of bg_cosine is
+architecture Behavioral of bg_sine is
 
     -- Add types here
     type NodeStates is (
@@ -35,6 +35,7 @@ architecture Behavioral of bg_cosine is
                     );
     type CalcStates is (
                         idle,
+                        sin2cosine,
                         normalize,
                         normalize1,
                         normalize2,
@@ -63,13 +64,13 @@ architecture Behavioral of bg_cosine is
     signal dout : std_logic_vector(DATA_WIDTH-1 downto 0);
 
     -- FP stuff
-    constant div_pi : std_logic_vector(DATA_WIDTH-1 downto 0) := x"3f22f983"; -- 0.636620f
+    constant div_pi : std_logic_vector(DATA_WIDTH-1 downto 0) := x"3f22f983";
     constant one : std_logic_vector(DATA_WIDTH-1 downto 0) := x"3f800000";
     constant two : std_logic_vector(DATA_WIDTH-1 downto 0) := x"40000000";
     constant three : std_logic_vector(DATA_WIDTH-1 downto 0) := x"40400000";
     constant four : std_logic_vector(DATA_WIDTH-1 downto 0) := x"40800000";
-    constant cos_param2 : std_logic_vector(DATA_WIDTH-1 downto 0) := x"3e66c299"; -- 0.225352f
-    constant cos_param1 : std_logic_vector(DATA_WIDTH-1 downto 0) := x"3f9cd853"; -- 1.225352f
+    constant cos_param2 : std_logic_vector(DATA_WIDTH-1 downto 0) := x"3e66c299";
+    constant cos_param1 : std_logic_vector(DATA_WIDTH-1 downto 0) := x"3f9cd853";
 
     signal fp_div_opa : std_logic_vector(DATA_WIDTH-1 downto 0);
     signal fp_div_opb : std_logic_vector(DATA_WIDTH-1 downto 0);
@@ -156,7 +157,7 @@ begin
         end if;
     end process;
 
-    -- cosine calculation
+    -- sine from cosine calculation
     process(clk)
     begin
         if clk'event and clk = '1' then
@@ -184,17 +185,27 @@ begin
                             fp_mul_opb <= div_pi; -- 2/pi
                             fp_mul_start <= '1';
                             fp_finished <= '0';
-                            CalcState <= normalize;
+                            CalcState <= sin2cosine;
                         else
                             CalcState <= idle;
                         end if;
-                    when normalize =>
+                    when sin2cosine =>
                         if (fp_mul_rdy = '1') then
+                            -- calculate x*2/pi - 1
+                            fp_sub_opa <= fp_mul_result;
+                            fp_sub_opb <= one;
+                            fp_sub_start <= '1';
+                            CalcState <= normalize;
+                        else
+                            CalcState <= sin2cosine;
+                        end if;
+                    when normalize =>
+                        if (fp_sub_rdy = '1') then
                             -- start second calc (z/4)
-                            fp_div_opa <= "0" & fp_mul_result(DATA_WIDTH-2 downto 0); -- abs value
+                            fp_div_opa <= "0" & fp_sub_result(DATA_WIDTH-2 downto 0); -- abs value
                             fp_div_opb <= four; -- 4.0
                             fp_div_start <= '1';
-                            dout <= "0" & fp_mul_result(DATA_WIDTH-2 downto 0); -- store abs value (needed in normalize 5)
+                            dout <= "0" & fp_sub_result(DATA_WIDTH-2 downto 0); -- store abs value (needed in normalize 5)
                             CalcState <= normalize1;
                         else
                             CalcState <= normalize;

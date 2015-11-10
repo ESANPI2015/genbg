@@ -6,7 +6,7 @@ library work;
 use work.bg_vhdl_types.all;
 -- Add additional libraries here
 
-entity bg_cosine is
+entity bg_tan is
     port(
     -- Inputs
         in_port : in std_logic_vector(DATA_WIDTH-1 downto 0);
@@ -21,9 +21,9 @@ entity bg_cosine is
         rst : in std_logic;
         clk : in std_logic
         );
-end bg_cosine;
+end bg_tan;
 
-architecture Behavioral of bg_cosine is
+architecture Behavioral of bg_tan is
 
     -- Add types here
     type NodeStates is (
@@ -35,7 +35,9 @@ architecture Behavioral of bg_cosine is
                     );
     type CalcStates is (
                         idle,
+                        sin2cosine,
                         normalize,
+                        normalize_b,
                         normalize1,
                         normalize2,
                         normalize3,
@@ -48,7 +50,9 @@ architecture Behavioral of bg_cosine is
                         cosine3,
                         cosine4,
                         cosine5,
-                        fixsign
+                        fixsign,
+                        check_round,
+                        tangens
                     );
     -- Add signals here
     signal NodeState : NodeStates;
@@ -60,6 +64,7 @@ architecture Behavioral of bg_cosine is
     signal internal_output_ack : std_logic;
 
     signal din : std_logic_vector(DATA_WIDTH-1 downto 0);
+    signal sine : std_logic_vector(DATA_WIDTH-1 downto 0);
     signal dout : std_logic_vector(DATA_WIDTH-1 downto 0);
 
     -- FP stuff
@@ -81,11 +86,6 @@ architecture Behavioral of bg_cosine is
     signal fp_mul_result : std_logic_vector(DATA_WIDTH-1 downto 0);
     signal fp_mul_start : std_logic;
     signal fp_mul_rdy : std_logic;
-    signal fp_add_opa : std_logic_vector(DATA_WIDTH-1 downto 0);
-    signal fp_add_opb : std_logic_vector(DATA_WIDTH-1 downto 0);
-    signal fp_add_result : std_logic_vector(DATA_WIDTH-1 downto 0);
-    signal fp_add_start : std_logic;
-    signal fp_add_rdy : std_logic;
     signal fp_sub_opa : std_logic_vector(DATA_WIDTH-1 downto 0);
     signal fp_sub_opb : std_logic_vector(DATA_WIDTH-1 downto 0);
     signal fp_sub_result : std_logic_vector(DATA_WIDTH-1 downto 0);
@@ -96,6 +96,7 @@ architecture Behavioral of bg_cosine is
     signal fp_trunc_start : std_logic;
     signal fp_trunc_rdy : std_logic;
     signal quadrant : unsigned(1 downto 0);
+    signal second_round : std_logic;
 
     signal fp_finished : std_logic;
     signal fp_start : std_logic;
@@ -131,18 +132,6 @@ begin
                     ready_o => fp_mul_rdy
                  );
 
-    -- NOTE: we can get rid of add or sub, because negation is easy, instead we could use an additional MUL :D
-    fp_add : entity work.fpu_add(rtl)
-        port map (
-                    clk_i => clk,
-                    opa_i => fp_add_opa,
-                    opb_i => fp_add_opb,
-                    rmode_i => "00", -- round to nearest even
-                    output_o => fp_add_result,
-                    start_i => fp_add_start,
-                    ready_o => fp_add_rdy
-                 );
-
     fp_sub : entity work.fpu_sub(rtl)
         port map (
                     clk_i => clk,
@@ -173,7 +162,7 @@ begin
         end if;
     end process;
 
-    -- cosine calculation
+    -- sine from cosine calculation
     process(clk)
     begin
         if clk'event and clk = '1' then
@@ -181,42 +170,66 @@ begin
                 fp_finished <= '0';
                 fp_div_start <= '0';
                 fp_mul_start <= '0';
-                fp_add_start <= '0';
                 fp_sub_start <= '0';
                 fp_trunc_start <= '0';
+                second_round <= '0';
                 dout <= (others => '0');
                 CalcState <= idle;
             else
                 -- defaults
                 fp_div_start <= '0';
                 fp_mul_start <= '0';
-                fp_add_start <= '0';
                 fp_sub_start <= '0';
                 fp_trunc_start <= '0';
                 fp_finished <= '0';
                 case CalcState is
                     when idle =>
                         fp_finished <= '1';
+                        second_round <= '0';
                         if (fp_start = '1') then
-                            -- start first calc (|x|*2/pi)
-                            fp_mul_opa <= "0" & din(DATA_WIDTH-2 downto 0);
+                            -- start first calc (x*2/pi)
+                            fp_mul_opa <= din;
                             fp_mul_opb <= div_pi; -- 2/pi
                             fp_mul_start <= '1';
                             fp_finished <= '0';
-                            CalcState <= normalize;
+                            CalcState <= sin2cosine;
                         else
                             CalcState <= idle;
                         end if;
-                    when normalize =>
+                    when sin2cosine =>
+                        second_round <= '0';
                         if (fp_mul_rdy = '1') then
+                            -- calculate x*2/pi - 1
+                            fp_sub_opa <= fp_mul_result;
+                            fp_sub_opb <= one;
+                            fp_sub_start <= '1';
+                            CalcState <= normalize;
+                        else
+                            CalcState <= sin2cosine;
+                        end if;
+                    when normalize =>
+                        second_round <= '0';
+                        if (fp_sub_rdy = '1') then
                             -- start second calc (z/4)
-                            fp_div_opa <= fp_mul_result;
+                            fp_div_opa <= "0" & fp_sub_result(DATA_WIDTH-2 downto 0); -- abs value
                             fp_div_opb <= four; -- 4.0
                             fp_div_start <= '1';
-                            dout <= fp_mul_result; -- store mul result (needed in normalize 4)
+                            dout <= "0" & fp_sub_result(DATA_WIDTH-2 downto 0); -- store abs value (needed in normalize 5)
                             CalcState <= normalize1;
                         else
                             CalcState <= normalize;
+                        end if;
+                    when normalize_b =>
+                        second_round <= '1';
+                        if (fp_mul_rdy = '1') then
+                            -- start second calc (z/4)
+                            fp_div_opa <= "0" & fp_mul_result(DATA_WIDTH-2 downto 0); -- abs value
+                            fp_div_opb <= four; -- 4.0
+                            fp_div_start <= '1';
+                            dout <= "0" & fp_mul_result(DATA_WIDTH-2 downto 0); -- store abs value (needed in normalize 5)
+                            CalcState <= normalize1;
+                        else
+                            CalcState <= normalize_b;
                         end if;
                     when normalize1 =>
                         if (fp_div_rdy = '1') then
@@ -290,8 +303,8 @@ begin
                     when cosine1 =>
                         if (fp_mul_rdy = '1') then
                             fp_trunc_op <= fp_mul_result; -- store z^2
-                            -- calculate cos_param1 * z^2
-                            fp_mul_opa <= cos_param1;
+                            -- calculate cos_param2 * z^2
+                            fp_mul_opa <= cos_param2;
                             fp_mul_opb <= fp_mul_result;
                             fp_mul_start <= '1';
                             CalcState <= cosine2;
@@ -300,23 +313,19 @@ begin
                         end if;
                     when cosine2 =>
                         if (fp_mul_rdy = '1') then
-                            -- calculate 1 - cos_param1*z^2
-                            fp_sub_opa <= one;
+                            -- calculate cos_param1 - cos_param2*z^2
+                            fp_sub_opa <= cos_param1;
                             fp_sub_opb <= fp_mul_result;
                             fp_sub_start <= '1';
-                            -- calculate z^4
-                            fp_mul_opa <= fp_trunc_op;
-                            fp_mul_opb <= fp_trunc_op;
-                            fp_mul_start <= '1';
                             CalcState <= cosine3;
                         else
                             CalcState <= cosine2;
                         end if;
                     when cosine3 =>
-                        if (fp_mul_rdy = '1') then -- mul is the slower op, so we just wait on it
-                            -- calculate cos_param2 * z^4
-                            fp_mul_opa <= cos_param2;
-                            fp_mul_opb <= fp_mul_result;
+                        if (fp_sub_rdy = '1') then
+                            -- calculate z^2*(cos_param1 - cos_param2*z^2)
+                            fp_mul_opa <= fp_trunc_op;
+                            fp_mul_opb <= fp_sub_result;
                             fp_mul_start <= '1';
                             CalcState <= cosine4;
                         else
@@ -324,28 +333,52 @@ begin
                         end if;
                     when cosine4 =>
                         if (fp_mul_rdy = '1') then
-                            -- calculate 1 - cos_param1*z^2 + cos_param2*z^4
-                            fp_add_opa <= fp_sub_result;
-                            fp_add_opb <= fp_mul_result;
-                            fp_add_start <= '1';
+                            -- calculate 1 - z^2(cos_param1 - cos_param2*z^2)
+                            fp_sub_opa <= one;
+                            fp_sub_opb <= fp_mul_result;
+                            fp_sub_start <= '1';
                             CalcState <= cosine5;
                         else
                             CalcState <= cosine4;
                         end if;
                     when cosine5 =>
-                        if (fp_add_rdy = '1') then
-                            fp_trunc_op <= fp_add_result;
+                        if (fp_sub_rdy = '1') then
+                            fp_trunc_op <= fp_sub_result;
                             CalcState <= fixsign;
                         else
                             CalcState <= cosine5;
                         end if;
                     when fixsign =>
-                        fp_finished <= '1';
-                        CalcState <= idle;
+                        CalcState <= check_round;
                         if (quadrant = 1 or quadrant = 2) then
                             dout <= "1"&fp_trunc_op(DATA_WIDTH-2 downto 0);
                         else
                             dout <= "0"&fp_trunc_op(DATA_WIDTH-2 downto 0);
+                        end if;
+
+                    when check_round =>
+                        if (second_round = '0') then
+                            -- store result in sine reg
+                            sine <= dout;
+                            -- restart calculation (for cosine)
+                            fp_mul_opa <= din;
+                            fp_mul_opb <= div_pi;
+                            fp_mul_start <= '1';
+                            CalcState <= normalize_b;
+                        else
+                            -- use previous and new result to calc tan
+                            fp_div_opa <= sine;
+                            fp_div_opb <= dout;
+                            fp_div_start <= '1';
+                            CalcState <= tangens;
+                        end if;
+                    when tangens =>
+                        if (fp_div_rdy = '1') then
+                            fp_finished <= '1';
+                            dout <= fp_div_result;
+                            CalcState <= idle;
+                        else
+                            CalcState <= tangens;
                         end if;
                 end case;
             end if;
