@@ -92,20 +92,20 @@ bg_error bg_merge_generate (bg_generator_t *g, struct input_port_t *input_port, 
                 code(g, line);
                 break;
             case bg_MERGE_TYPE_MIN:
-                sprintf(line, "\tmerge[%u] = (merge[%u] > %ff) ? %ff : merge[%u];",
-                        id, 
+                sprintf(line, "\tmerge[%u] = (%ff < merge[%u]) ? %ff : merge[%u];",
                         id, 
                         input_port->defaultValue,
+                        id, 
                         input_port->defaultValue,
                         id
                         );
                 code(g, line);
                 break;
             case bg_MERGE_TYPE_MAX:
-                sprintf(line, "\tmerge[%u] = (merge[%u] < %ff) ? %ff : merge[%u];",
-                        id, 
+                sprintf(line, "\tmerge[%u] = (%ff > merge[%u]) ? %ff : merge[%u];",
                         id, 
                         input_port->defaultValue,
+                        id, 
                         input_port->defaultValue,
                         id
                         );
