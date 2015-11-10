@@ -38,6 +38,8 @@ architecture Behavioral of bg_less_than_epsilon is
     signal internal_output_req : std_logic;
     signal internal_output_ack : std_logic;
 
+    signal port1 : std_logic_vector(DATA_WIDTH-1 downto 0);
+    signal port2 : std_logic_vector(DATA_WIDTH-1 downto 0);
     signal is_nan : std_logic;
     signal rest : std_logic_vector(DATA_WIDTH-2 downto 0);
     signal rest_epsilon : std_logic_vector(DATA_WIDTH-2 downto 0);
@@ -49,7 +51,6 @@ begin
     internal_output_ack <= out_ack;
 
     -- The value on port 0 defines which of the values on port 1 or 2 gets selected
-    rest <= in_port(0)(DATA_WIDTH-2 downto 0);
     is_nan <= '1' when rest=SNAN or rest=QNAN else '0';
     rest_epsilon <= in_epsilon(DATA_WIDTH-2 downto 0);
     less_than_epsilon <= '1' when ((is_nan = '0') and (unsigned(rest) < unsigned(rest_epsilon))) else '0';
@@ -71,11 +72,9 @@ begin
                             internal_input_ack <= '0';
                             internal_output_req <= '0';
                             if (internal_input_req = '1') then
-                                if (less_than_epsilon = '1') then
-                                    out_port <= in_port(1);
-                                else
-                                    out_port <= in_port(2);
-                                end if;
+                                rest <= in_port(0)(DATA_WIDTH-2 downto 0);
+                                port1 <= in_port(1);
+                                port2 <= in_port(2);
                                 internal_input_ack <= '1';
                                 NodeState <= new_data;
                             else
@@ -83,8 +82,13 @@ begin
                             end if;
                         when new_data =>
                             internal_input_ack <= '1';
-                            internal_output_req <= '1'; -- early signalling
+                            internal_output_req <= '0';
                             if (internal_input_req = '0') then
+                                if (less_than_epsilon = '1') then
+                                    out_port <= port1;
+                                else
+                                    out_port <= port2;
+                                end if;
                                 internal_input_ack <= '0';
                                 NodeState <= data_out;
                             else

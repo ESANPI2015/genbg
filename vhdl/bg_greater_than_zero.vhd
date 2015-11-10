@@ -36,9 +36,11 @@ architecture Behavioral of bg_greater_than_zero is
     signal internal_output_req : std_logic;
     signal internal_output_ack : std_logic;
 
+    signal port1 : std_logic_vector(DATA_WIDTH-1 downto 0);
+    signal port2 : std_logic_vector(DATA_WIDTH-1 downto 0);
     signal sign : std_logic;
-    signal is_nan : std_logic;
     signal rest : std_logic_vector(DATA_WIDTH-2 downto 0);
+    signal is_nan : std_logic;
     signal greater_than_zero : std_logic;
 begin
     internal_input_req <= in_req(0) and in_req(1) and in_req(2);
@@ -47,8 +49,6 @@ begin
     internal_output_ack <= out_ack;
 
     -- The value on port 0 defines which of the values on port 1 or 2 gets selected
-    sign <= in_port(0)(DATA_WIDTH-1);
-    rest <= in_port(0)(DATA_WIDTH-2 downto 0);
     is_nan <= '1' when rest=SNAN or rest=QNAN else '0';
     greater_than_zero <= '1' when ((is_nan='0') and (sign = '0') and (or_reduce(rest)='1')) else '0';
 
@@ -59,6 +59,8 @@ begin
             if rst = '1' then
                 internal_input_ack <= '0';
                 internal_output_req <= '0';
+                sign <= '0';
+                rest <= (others => '0');
                 out_port <= (others => '0');
                 NodeState <= idle;
             else
@@ -69,11 +71,10 @@ begin
                             internal_input_ack <= '0';
                             internal_output_req <= '0';
                             if (internal_input_req = '1') then
-                                if (greater_than_zero = '1') then
-                                    out_port <= in_port(1);
-                                else
-                                    out_port <= in_port(2);
-                                end if;
+                                sign <= in_port(0)(DATA_WIDTH-1);
+                                rest <= in_port(0)(DATA_WIDTH-2 downto 0);
+                                port1 <= in_port(1);
+                                port2 <= in_port(2);
                                 internal_input_ack <= '1';
                                 NodeState <= new_data;
                             else
@@ -81,8 +82,13 @@ begin
                             end if;
                         when new_data =>
                             internal_input_ack <= '1';
-                            internal_output_req <= '1'; -- early signalling
+                            internal_output_req <= '0';
                             if (internal_input_req = '0') then
+                                if (greater_than_zero = '1') then
+                                    out_port <= port1;
+                                else
+                                    out_port <= port2;
+                                end if;
                                 internal_input_ack <= '0';
                                 NodeState <= data_out;
                             else
