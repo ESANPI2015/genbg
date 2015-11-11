@@ -324,6 +324,28 @@ package bg_graph_components is
             );
     end component;
 
+	component bg_merge_norm is
+        generic(
+                   NO_INPUTS : integer := 1
+               );
+        port(
+            -- Inputs
+                in_port : in DATA_PORT(NO_INPUTS-1 downto 0);
+                in_req : in DATA_SIGNAL(NO_INPUTS-1 downto 0);
+                in_ack : out DATA_SIGNAL(NO_INPUTS-1 downto 0);
+            -- Special values
+                in_bias : in std_logic_vector(DATA_WIDTH-1 downto 0);
+            -- Outputs
+                out_port : out std_logic_vector(DATA_WIDTH-1 downto 0);
+                out_req : out std_logic;
+                out_ack : in std_logic;
+            -- Other signals
+                halt : in std_logic;
+                rst : in std_logic;
+                clk : in std_logic
+            );
+    end component;
+
     component bg_greater_than_zero is
         port(
         -- Inputs

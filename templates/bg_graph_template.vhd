@@ -243,6 +243,21 @@ begin
                      );
             end generate;
 
+        GENERATE_MERGE_NORM_SIMPLE : if (MERGE_TYPE(i) = simple_norm) generate
+            merge_norm_simple : bg_pipe_simple
+            port map (
+                        clk => clk,
+                        rst => rst,
+                        halt => halt,
+                        in_port  => to_merge(i)(0),
+                        in_req   => to_merge_req(i)(0),
+                        in_ack   => to_merge_ack(i)(0),
+                        out_port => from_merge(i),
+                        out_req  => from_merge_req(i),
+                        out_ack  => from_merge_ack(i)
+                     );
+            end generate;
+
         GENERATE_MERGE_SUM : if (MERGE_TYPE(i) = sum) generate
             merge_sum : bg_merge_sum
             generic map (
@@ -264,6 +279,25 @@ begin
 
         GENERATE_MERGE_PROD : if (MERGE_TYPE(i) = prod) generate
             merge_prod : bg_merge_prod
+            generic map (
+                            NO_INPUTS => MERGE_INPUTS(i)
+                        )
+            port map (
+                        clk => clk,
+                        rst => rst,
+                        halt => halt,
+                        in_bias  => MERGE_BIAS(i),
+                        in_port  => to_merge(i)(MERGE_INPUTS(i)-1 downto 0),
+                        in_req   => to_merge_req(i)(MERGE_INPUTS(i)-1 downto 0),
+                        in_ack   => to_merge_ack(i)(MERGE_INPUTS(i)-1 downto 0),
+                        out_port => from_merge(i),
+                        out_req  => from_merge_req(i),
+                        out_ack  => from_merge_ack(i)
+                     );
+            end generate;
+
+        GENERATE_MERGE_NORM : if (MERGE_TYPE(i) = norm) generate
+            merge_norm : bg_merge_norm
             generic map (
                             NO_INPUTS => MERGE_INPUTS(i)
                         )

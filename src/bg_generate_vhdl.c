@@ -2,6 +2,7 @@
 #include "bg_generate_vhdl.h"
 #include "node_types/bg_node_subgraph.h"
 #include "node_list.h"
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -124,9 +125,11 @@ static int addMerge(bg_generator_t *g, const bg_merge_type type, const unsigned 
             case bg_MERGE_TYPE_MIN:
                 id = addSource(g, defValue < bias ? defValue : bias);
                 break;
+            case bg_MERGE_TYPE_NORM:
+                id = addSource(g, sqrtf(bias * bias + defValue * defValue));
+                break;
             case bg_MERGE_TYPE_WEIGHTED_SUM:
             case bg_MERGE_TYPE_MEAN:
-            case bg_MERGE_TYPE_NORM:
             case bg_MERGE_TYPE_MEDIAN:
             default:
                 break;
@@ -168,9 +171,15 @@ static int addMerge(bg_generator_t *g, const bg_merge_type type, const unsigned 
             /*NOTE: There could be an optimization rule here if inputs = 1 and bias = inf but this is assumed to be very rare*/
             snprintf(entry.repl, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "%u => min,\n@mergeType%u@", g->merges, g->merges+1);
             break;
+        case bg_MERGE_TYPE_NORM:
+            /*OPTIMIZATION RULE: Iff inputs = 1 and bias = 0.0f produce simple merge*/
+            if ((inputs == 1) && (bias == 0.0f))
+                snprintf(entry.repl, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "%u => simple_norm,\n@mergeType%u@", g->merges, g->merges+1);
+            else
+                snprintf(entry.repl, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "%u => norm,\n@mergeType%u@", g->merges, g->merges+1);
+            break;
         case bg_MERGE_TYPE_WEIGHTED_SUM:
         case bg_MERGE_TYPE_MEAN:
-        case bg_MERGE_TYPE_NORM:
         case bg_MERGE_TYPE_MEDIAN:
         default:
             return id;
