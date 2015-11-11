@@ -67,12 +67,14 @@ static unsigned int addEdge(bg_generator_t *g, const float weight, const unsigne
     if (isBackedge)
     {
         /*OPTIMIZATION RULE: Iff weight = 1.0f produce simple backedge*/
+        /*TODO: There is another possible optimization for weight=-1.0f. This needs another simple_backedge_inv version*/
         if (weight == 1.0f)
             snprintf(entry.repl, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "%u => simple_backedge,\n@edgeType%u@", g->edges, g->edges+1);
         else
             snprintf(entry.repl, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "%u => backedge,\n@edgeType%u@", g->edges, g->edges+1);
     } else {
         /*OPTIMIZATION RULE: Iff weight = 1.0f produce simple edge*/
+        /*TODO: There is another possible optimization for weight=-1.0f. This needs another simple_inv version*/
         if (weight == 1.0f)
             snprintf(entry.repl, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "%u => simple,\n@edgeType%u@", g->edges, g->edges+1);
         else
@@ -117,7 +119,11 @@ static int addMerge(bg_generator_t *g, const bg_merge_type type, const unsigned 
                 id = addSource(g, defValue * bias);
                 break;
             case bg_MERGE_TYPE_MAX:
+                id = addSource(g, defValue > bias ? defValue : bias);
+                break;
             case bg_MERGE_TYPE_MIN:
+                id = addSource(g, defValue < bias ? defValue : bias);
+                break;
             case bg_MERGE_TYPE_WEIGHTED_SUM:
             case bg_MERGE_TYPE_MEAN:
             case bg_MERGE_TYPE_NORM:
@@ -148,13 +154,20 @@ static int addMerge(bg_generator_t *g, const bg_merge_type type, const unsigned 
             break;
         case bg_MERGE_TYPE_PRODUCT:
             /*OPTIMIZATION RULE: Iff inputs = 1 and bias = 1.0f produce simple merge*/
+            /*TODO: There is a second rule if bias = -1.0f. This needs another simple_prod_inv version*/
             if ((inputs == 1) && (bias == 1.0f))
                 snprintf(entry.repl, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "%u => simple_prod,\n@mergeType%u@", g->merges, g->merges+1);
             else
                 snprintf(entry.repl, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "%u => prod,\n@mergeType%u@", g->merges, g->merges+1);
             break;
         case bg_MERGE_TYPE_MAX:
+            /*NOTE: There could be an optimization rule here if inputs = 1 and bias = -inf but this is assumed to be very rare*/
+            snprintf(entry.repl, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "%u => max,\n@mergeType%u@", g->merges, g->merges+1);
+            break;
         case bg_MERGE_TYPE_MIN:
+            /*NOTE: There could be an optimization rule here if inputs = 1 and bias = inf but this is assumed to be very rare*/
+            snprintf(entry.repl, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "%u => min,\n@mergeType%u@", g->merges, g->merges+1);
+            break;
         case bg_MERGE_TYPE_WEIGHTED_SUM:
         case bg_MERGE_TYPE_MEAN:
         case bg_MERGE_TYPE_NORM:

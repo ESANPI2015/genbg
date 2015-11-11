@@ -281,6 +281,44 @@ begin
                      );
             end generate;
 
+        GENERATE_MERGE_MAX : if (MERGE_TYPE(i) = max) generate
+            merge_max : bg_merge_max
+            generic map (
+                            NO_INPUTS => MERGE_INPUTS(i)
+                        )
+            port map (
+                        clk => clk,
+                        rst => rst,
+                        halt => halt,
+                        in_bias  => MERGE_BIAS(i),
+                        in_port  => to_merge(i)(MERGE_INPUTS(i)-1 downto 0),
+                        in_req   => to_merge_req(i)(MERGE_INPUTS(i)-1 downto 0),
+                        in_ack   => to_merge_ack(i)(MERGE_INPUTS(i)-1 downto 0),
+                        out_port => from_merge(i),
+                        out_req  => from_merge_req(i),
+                        out_ack  => from_merge_ack(i)
+                     );
+            end generate;
+
+        GENERATE_MERGE_MIN : if (MERGE_TYPE(i) = min) generate
+            merge_min : bg_merge_min
+            generic map (
+                            NO_INPUTS => MERGE_INPUTS(i)
+                        )
+            port map (
+                        clk => clk,
+                        rst => rst,
+                        halt => halt,
+                        in_bias  => MERGE_BIAS(i),
+                        in_port  => to_merge(i)(MERGE_INPUTS(i)-1 downto 0),
+                        in_req   => to_merge_req(i)(MERGE_INPUTS(i)-1 downto 0),
+                        in_ack   => to_merge_ack(i)(MERGE_INPUTS(i)-1 downto 0),
+                        out_port => from_merge(i),
+                        out_req  => from_merge_req(i),
+                        out_ack  => from_merge_ack(i)
+                     );
+            end generate;
+
         end generate;
 
     -- instantiate copies

@@ -26,6 +26,7 @@ package bg_graph_@name@_config is
     constant NO_SOURCES : integer := @sources@;
     constant NO_SINKS   : integer := @sinks@;
     constant NO_COPIES  : integer := @copies@;
+    -- TODO: Add other merges
     constant NO_MERGES  : integer := @merges@;
     -- TODO: Add other nodes
     constant NO_UNARY   : integer := @unaryNodes@;
@@ -132,7 +133,7 @@ package bg_graph_@name@_config is
     -----
     -- Merge types and constant bias
     ----
-    type merge_type_t is (none, simple_sum, sum, simple_prod, prod); -- simple* will be replaced by pipe
+    type merge_type_t is (none, simple_sum, sum, simple_prod, prod, max, min); -- simple* will be replaced by pipe
     type merge_types_t is array (NO_MERGES downto 0) of merge_type_t;
     type merge_bias_t is array (NO_MERGES downto 0) of std_logic_vector(DATA_WIDTH-1 downto 0);
     type merge_output_ports_t is array(NO_MERGES-1 downto 0) of std_logic_vector(DATA_WIDTH-1 downto 0);
