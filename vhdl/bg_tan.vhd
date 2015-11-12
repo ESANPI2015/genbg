@@ -26,13 +26,6 @@ end bg_tan;
 architecture Behavioral of bg_tan is
 
     -- Add types here
-    type NodeStates is (
-                        idle, 
-                        new_data, 
-                        compute,
-                        data_out, 
-                        sync
-                    );
     type CalcStates is (
                         idle,
                         sin2cosine,
@@ -52,10 +45,15 @@ architecture Behavioral of bg_tan is
                         cosine5,
                         fixsign,
                         check_round,
-                        tangens
+                        tangens,
+                        sync
                     );
+    type InputStates is (idle, waiting, pushing);
+    type OutputStates is (idle, pushing, sync);
+
     -- Add signals here
-    signal NodeState : NodeStates;
+    signal InputState : InputStates;
+    signal OutputState : OutputStates;
     signal CalcState : CalcStates;
 
     signal internal_input_req : std_logic;
@@ -98,8 +96,10 @@ architecture Behavioral of bg_tan is
     signal quadrant : unsigned(1 downto 0);
     signal second_round : std_logic;
 
-    signal fp_finished : std_logic;
-    signal fp_start : std_logic;
+    signal fp_in_req : std_logic;
+    signal fp_in_ack : std_logic;
+    signal fp_out_req : std_logic;
+    signal fp_out_ack : std_logic;
 
 begin
     fp_div : entity work.fpu_div(rtl)
@@ -167,7 +167,8 @@ begin
     begin
         if clk'event and clk = '1' then
             if rst = '1' then
-                fp_finished <= '0';
+                fp_in_ack <= '0';
+                fp_out_req <= '0';
                 fp_div_start <= '0';
                 fp_mul_start <= '0';
                 fp_sub_start <= '0';
@@ -177,24 +178,23 @@ begin
                 CalcState <= idle;
             else
                 -- defaults
+                fp_in_ack <= '0';
+                fp_out_req <= '0';
                 fp_div_start <= '0';
                 fp_mul_start <= '0';
                 fp_sub_start <= '0';
                 fp_trunc_start <= '0';
-                fp_finished <= '0';
+                CalcState <= CalcState;
                 case CalcState is
                     when idle =>
-                        fp_finished <= '1';
                         second_round <= '0';
-                        if (fp_start = '1') then
+                        if (fp_in_req = '1') then
                             -- start first calc (x*2/pi)
                             fp_mul_opa <= din;
                             fp_mul_opb <= div_pi; -- 2/pi
                             fp_mul_start <= '1';
-                            fp_finished <= '0';
+                            fp_in_ack <= '1';
                             CalcState <= sin2cosine;
-                        else
-                            CalcState <= idle;
                         end if;
                     when sin2cosine =>
                         second_round <= '0';
@@ -204,8 +204,6 @@ begin
                             fp_sub_opb <= one;
                             fp_sub_start <= '1';
                             CalcState <= normalize;
-                        else
-                            CalcState <= sin2cosine;
                         end if;
                     when normalize =>
                         second_round <= '0';
@@ -216,8 +214,6 @@ begin
                             fp_div_start <= '1';
                             dout <= "0" & fp_sub_result(DATA_WIDTH-2 downto 0); -- store abs value (needed in normalize 5)
                             CalcState <= normalize1;
-                        else
-                            CalcState <= normalize;
                         end if;
                     when normalize_b =>
                         second_round <= '1';
@@ -228,8 +224,6 @@ begin
                             fp_div_start <= '1';
                             dout <= "0" & fp_mul_result(DATA_WIDTH-2 downto 0); -- store abs value (needed in normalize 5)
                             CalcState <= normalize1;
-                        else
-                            CalcState <= normalize_b;
                         end if;
                     when normalize1 =>
                         if (fp_div_rdy = '1') then
@@ -237,8 +231,6 @@ begin
                             fp_trunc_op <= fp_div_result;
                             fp_trunc_start <= '1';
                             CalcState <= normalize2;
-                        else
-                            CalcState <= normalize1;
                         end if;
                     when normalize2 =>
                         if (fp_trunc_rdy = '1') then
@@ -247,8 +239,6 @@ begin
                             fp_mul_opb <= four; -- 4.0
                             fp_mul_start <= '1';
                             CalcState <= normalize3;
-                        else
-                            CalcState <= normalize2;
                         end if;
                     when normalize3 =>
                         if (fp_mul_rdy = '1') then
@@ -257,15 +247,11 @@ begin
                             fp_sub_opb <= fp_mul_result;
                             fp_sub_start <= '1';
                             CalcState <= normalize4;
-                        else
-                            CalcState <= normalize3;
                         end if;
                     when normalize4 =>
                         if (fp_sub_rdy = '1') then
                             dout <= fp_sub_result; -- store normalized value (now quadrant calc starts)
                             CalcState <= normalize5;
-                        else
-                            CalcState <= normalize4;
                         end if;
                     when normalize5 =>
                         CalcState <= normalize6;
@@ -289,8 +275,6 @@ begin
                         if (fp_sub_rdy = '1') then
                             fp_trunc_op <= fp_sub_result;
                             CalcState <= cosine; -- assumes the correct value in fp_trunc_op
-                        else
-                            CalcState <= normalize6;
                         end if;
 
                     when cosine =>
@@ -308,8 +292,6 @@ begin
                             fp_mul_opb <= fp_mul_result;
                             fp_mul_start <= '1';
                             CalcState <= cosine2;
-                        else
-                            CalcState <= cosine1;
                         end if;
                     when cosine2 =>
                         if (fp_mul_rdy = '1') then
@@ -318,8 +300,6 @@ begin
                             fp_sub_opb <= fp_mul_result;
                             fp_sub_start <= '1';
                             CalcState <= cosine3;
-                        else
-                            CalcState <= cosine2;
                         end if;
                     when cosine3 =>
                         if (fp_sub_rdy = '1') then
@@ -328,8 +308,6 @@ begin
                             fp_mul_opb <= fp_sub_result;
                             fp_mul_start <= '1';
                             CalcState <= cosine4;
-                        else
-                            CalcState <= cosine3;
                         end if;
                     when cosine4 =>
                         if (fp_mul_rdy = '1') then
@@ -338,15 +316,11 @@ begin
                             fp_sub_opb <= fp_mul_result;
                             fp_sub_start <= '1';
                             CalcState <= cosine5;
-                        else
-                            CalcState <= cosine4;
                         end if;
                     when cosine5 =>
                         if (fp_sub_rdy = '1') then
                             fp_trunc_op <= fp_sub_result;
                             CalcState <= fixsign;
-                        else
-                            CalcState <= cosine5;
                         end if;
                     when fixsign =>
                         CalcState <= check_round;
@@ -355,7 +329,6 @@ begin
                         else
                             dout <= "0"&fp_trunc_op(DATA_WIDTH-2 downto 0);
                         end if;
-
                     when check_round =>
                         if (second_round = '0') then
                             -- store result in sine reg
@@ -374,79 +347,89 @@ begin
                         end if;
                     when tangens =>
                         if (fp_div_rdy = '1') then
-                            fp_finished <= '1';
+                            fp_out_req <= '1';
                             dout <= fp_div_result;
+                            CalcState <= sync;
+                        end if;
+                    when sync =>
+                        fp_out_req <= '1';
+                        if (fp_out_ack = '1') then
+                            fp_out_req <= '0';
                             CalcState <= idle;
-                        else
-                            CalcState <= tangens;
                         end if;
                 end case;
             end if;
         end if;
     end process;
 
-    NodeProcess : process(clk)
+    InputProcess : process(clk)
     begin
         if clk'event and clk = '1' then
             if rst = '1' then
+                fp_in_req <= '0';
+                din <= (others => '0');
                 internal_input_ack <= '0';
-                internal_output_req <= '0';
-                out_port <= (others => '0');
-                NodeState <= idle;
+                InputState <= idle;
             else
-                if (halt = '0') then
-                    -- defaults
-                    case NodeState is
-                        when idle =>
-                            internal_input_ack <= '0';
-                            internal_output_req <= '0';
-                            if (internal_input_req = '1' and fp_finished='1') then
-                                din <= in_port;
-                                fp_start <= '1';
-                                internal_input_ack <= '1';
-                                NodeState <= new_data;
-                            else
-                                NodeState <= idle;
-                            end if;
-                        when new_data =>
+                InputState <= InputState;
+                internal_input_ack <= '0';
+                fp_in_req <= '0';
+                case InputState is
+                    when idle =>
+                        if (internal_input_req = '1' and halt = '0') then
                             internal_input_ack <= '1';
-                            internal_output_req <= '0';
-                            if (internal_input_req = '0') then
-                                internal_input_ack <= '0';
-                                NodeState <= compute;
-                            else
-                                NodeState <= new_data;
-                            end if;
-                        when compute =>
+                            din <= in_port;
+                            InputState <= waiting;
+                        end if;
+                    when waiting =>
+                        internal_input_ack <= '1';
+                        if (internal_input_req = '0') then
                             internal_input_ack <= '0';
-                            internal_output_req <= '0';
-                            if (fp_finished = '1') then
-                                out_port <= dout;
-                                NodeState <= data_out;
-                            else
-                                NodeState <= compute;
-                            end if;
-                        when data_out =>
-                            internal_input_ack <= '0';
-                            internal_output_req <= '1';
-                            if (internal_output_ack = '1') then
-                                internal_output_req <= '0';
-                                NodeState <= sync;
-                            else
-                                NodeState <= data_out;
-                            end if;
-                        when sync =>
-                            internal_input_ack <= '0';
-                            internal_output_req <= '0';
-                            if (internal_output_ack = '0') then
-                                NodeState <= idle;
-                            else
-                                NodeState <= sync;
-                            end if;
-                    end case;
-                end if;
+                            fp_in_req <= '1';
+                            InputState <= pushing;
+                        end if;
+                    when pushing =>
+                        fp_in_req <= '1';
+                        if (fp_in_ack = '1') then
+                            fp_in_req <= '0';
+                            InputState <= idle;
+                        end if;
+                end case;
             end if;
         end if;
-    end process NodeProcess;
+    end process InputProcess;
 
+    OutputProcess : process(clk)
+    begin
+        if rising_edge(clk) then
+            if rst = '1' then
+                fp_out_ack <= '0';
+                internal_output_req <= '0';
+                out_port <= (others => '0');
+                OutputState <= idle;
+            else
+                fp_out_ack <= '0';
+                internal_output_req <= '0';
+                OutputState <= OutputState;
+                case OutputState is
+                    when idle =>
+                        if (fp_out_req = '1') then
+                            out_port <= dout;
+                            fp_out_ack <= '1';
+                            OutputState <= pushing;
+                        end if;
+                    when pushing =>
+                        internal_output_req <= '1';
+                        if (internal_output_ack = '1') then
+                            internal_output_req <= '0';
+                            OutputState <= sync;
+                        end if;
+                    when sync =>
+                        if (internal_output_ack = '0') then
+                            OutputState <= idle;
+                        end if;
+                end case;
+            end if;
+        end if;
+    end process OutputProcess;
 end Behavioral;

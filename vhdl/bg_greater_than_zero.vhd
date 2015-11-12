@@ -36,6 +36,7 @@ architecture Behavioral of bg_greater_than_zero is
     signal internal_output_req : std_logic;
     signal internal_output_ack : std_logic;
 
+    signal result : std_logic_vector(DATA_WIDTH-1 downto 0);
     signal port1 : std_logic_vector(DATA_WIDTH-1 downto 0);
     signal port2 : std_logic_vector(DATA_WIDTH-1 downto 0);
     signal sign : std_logic;
@@ -51,6 +52,9 @@ begin
     -- The value on port 0 defines which of the values on port 1 or 2 gets selected
     is_nan <= '1' when rest=SNAN or rest=QNAN else '0';
     greater_than_zero <= '1' when ((is_nan='0') and (sign = '0') and (or_reduce(rest)='1')) else '0';
+    with greater_than_zero select
+        result <= port1 when '1',
+                  port2 when '0';
 
     -- Add processes here
     NodeProcess : process(clk)
@@ -84,11 +88,7 @@ begin
                             internal_input_ack <= '1';
                             internal_output_req <= '0';
                             if (internal_input_req = '0') then
-                                if (greater_than_zero = '1') then
-                                    out_port <= port1;
-                                else
-                                    out_port <= port2;
-                                end if;
+                                out_port <= result;
                                 internal_input_ack <= '0';
                                 NodeState <= data_out;
                             else

@@ -38,6 +38,7 @@ architecture Behavioral of bg_less_than_epsilon is
     signal internal_output_req : std_logic;
     signal internal_output_ack : std_logic;
 
+    signal result : std_logic_vector(DATA_WIDTH-1 downto 0);
     signal port1 : std_logic_vector(DATA_WIDTH-1 downto 0);
     signal port2 : std_logic_vector(DATA_WIDTH-1 downto 0);
     signal is_nan : std_logic;
@@ -54,6 +55,9 @@ begin
     is_nan <= '1' when rest=SNAN or rest=QNAN else '0';
     rest_epsilon <= in_epsilon(DATA_WIDTH-2 downto 0);
     less_than_epsilon <= '1' when ((is_nan = '0') and (unsigned(rest) < unsigned(rest_epsilon))) else '0';
+    with less_than_epsilon select
+        result <= port1 when '1',
+                  port2 when '0';
 
     -- Add processes here
     NodeProcess : process(clk)
@@ -84,11 +88,7 @@ begin
                             internal_input_ack <= '1';
                             internal_output_req <= '0';
                             if (internal_input_req = '0') then
-                                if (less_than_epsilon = '1') then
-                                    out_port <= port1;
-                                else
-                                    out_port <= port2;
-                                end if;
+                                out_port <= result;
                                 internal_input_ack <= '0';
                                 NodeState <= data_out;
                             else

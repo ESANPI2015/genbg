@@ -30,12 +30,12 @@ end bg_edge;
 
 architecture Behavioral of bg_edge is
     -- Add types here
-    type NodeStates is (idle, new_data, compute, data_out, sync);
+    type InputStates is (idle, waiting, pushing);
+    type OutputStates is (idle, waiting, pushing, sync);
     -- Add signals here
-    signal NodeState : NodeStates;
-    signal InitialState : NodeStates;
-
-    signal data : std_logic_vector(DATA_WIDTH-1 downto 0);
+    signal InputState : InputStates;
+    signal OutputState : OutputStates;
+    signal InitialState : OutputStates;
 
     signal internal_input_req : std_logic;
     signal internal_input_ack : std_logic;
@@ -43,14 +43,16 @@ architecture Behavioral of bg_edge is
     signal internal_output_ack : std_logic;
 
     -- FP stuff
+    signal fp_opb : std_logic_vector(DATA_WIDTH-1 downto 0);
+    signal fp_in_req : std_logic;
+    signal fp_in_ack : std_logic;
     signal fp_start : std_logic;
     signal fp_rdy : std_logic;
-    signal fp_finished : std_logic; -- this is a flipflopped version
     signal fp_result : std_logic_vector(DATA_WIDTH-1 downto 0);
 begin
 
     GEN_BACK_EDGE : if (IS_BACKEDGE = true) generate
-            InitialState <= data_out;
+            InitialState <= pushing;
         end generate;
 
     GEN_NORMAL_EDGE : if (IS_BACKEDGE = false) generate
@@ -63,7 +65,7 @@ begin
     port map (
                 clk_i => clk,
                 opa_i => in_weight,
-                opb_i => data,
+                opb_i => fp_opb,
                 rmode_i => "00", -- round to nearest even
                 output_o => fp_result,
                 start_i => fp_start,
@@ -75,88 +77,81 @@ begin
     out_req <= internal_output_req;
     internal_output_ack <= out_ack;
 
-    -- Process to detect if the fp stage has finished since last fp_start signal
-    process(clk)
-    begin
-        if rising_edge(clk) then
-            if rst = '1' then
-                fp_finished <= '1';
-            else
-                if (fp_start = '1') then
-                    fp_finished <= '0';
-                elsif (fp_rdy = '1') then
-                    fp_finished <= '1';
-                end if;
-            end if;
-        end if;
-    end process;
-
-    -- Add processes here
-    NodeProcess : process(clk)
+    InputProcess : process(clk)
     begin
         if clk'event and clk = '1' then
             if rst = '1' then
+                fp_in_req <= '0';
+                fp_opb <= (others => '0');
                 internal_input_ack <= '0';
-                internal_output_req <= '0';
-                data <= (others => '0');
-                out_port <= (others => '0');
-                fp_start <= '0';
-                NodeState <= InitialState;
+                InputState <= idle;
             else
-                -- defaults
-                fp_start <= '0';
-                if (halt = '0') then
-                    case NodeState is
-                        when idle =>
-                            internal_input_ack <= '0';
-                            internal_output_req <= '0';
-                            if (internal_input_req = '1') then
-                                data <= in_port;
-                                fp_start <= '1';
-                                internal_input_ack <= '1';
-                                NodeState <= new_data;
-                            else
-                                NodeState <= idle;
-                            end if;
-                        when new_data =>
+                internal_input_ack <= '0';
+                fp_in_req <= '0';
+                InputState <= InputState;
+                case InputState is
+                    when idle =>
+                        if (internal_input_req = '1' and halt = '0') then
                             internal_input_ack <= '1';
-                            internal_output_req <= '0';
-                            if (internal_input_req = '0') then
-                                internal_input_ack <= '0';
-                                NodeState <= compute;
-                            else
-                                NodeState <= new_data;
-                            end if;
-                        when compute =>
+                            fp_opb <= in_port;
+                            InputState <= waiting;
+                        end if;
+                    when waiting =>
+                        internal_input_ack <= '1';
+                        if (internal_input_req = '0') then
                             internal_input_ack <= '0';
-                            internal_output_req <= '0';
-                            -- Wait until the fp stage is ready
-                            if (fp_finished = '1') then
-                                out_port <= fp_result;
-                                NodeState <= data_out;
-                            else
-                                NodeState <= compute;
-                            end if;
-                        when data_out =>
-                            internal_input_ack <= '0';
-                            internal_output_req <= '1';
-                            if (internal_output_ack = '1') then
-                                internal_output_req <= '0';
-                                NodeState <= sync;
-                            else
-                                NodeState <= data_out;
-                            end if;
-                        when sync =>
-                            internal_input_ack <= '0';
-                            internal_output_req <= '0';
-                            if (internal_output_ack = '0') then
-                                NodeState <= idle;
-                            else
-                                NodeState <= sync;
-                            end if;
-                    end case;
-                end if;
+                            fp_in_req <= '1';
+                            InputState <= pushing;
+                        end if;
+                    when pushing =>
+                        fp_in_req <= '1';
+                        if (fp_in_ack = '1') then
+                            fp_in_req <= '0';
+                            InputState <= idle;
+                        end if;
+                end case;
             end if;
         end if;
-    end process NodeProcess;
+    end process InputProcess;
+
+    OutputProcess : process(clk)
+    begin
+        if rising_edge(clk) then
+            if rst = '1' then
+                fp_in_ack <= '0';
+                fp_start <= '0';
+                internal_output_req <= '0';
+                out_port <= (others => '0');
+                OutputState <= idle;
+            else
+                fp_in_ack <= '0';
+                fp_start <= '0';
+                internal_output_req <= '0';
+                OutputState <= OutputState;
+                case OutputState is
+                    when idle =>
+                        if (fp_in_req = '1') then
+                            fp_in_ack <= '1';
+                            fp_start <= '1';
+                            OutputState <= waiting;
+                        end if;
+                    when waiting =>
+                        if (fp_rdy = '1') then
+                            out_port <= fp_result;
+                            OutputState <= pushing;
+                        end if;
+                    when pushing =>
+                        internal_output_req <= '1';
+                        if (internal_output_ack = '1') then
+                            internal_output_req <= '0';
+                            OutputState <= sync;
+                        end if;
+                    when sync =>
+                        if (internal_output_ack = '0') then
+                            OutputState <= idle;
+                        end if;
+                end case;
+            end if;
+        end if;
+    end process OutputProcess;
 end Behavioral;
