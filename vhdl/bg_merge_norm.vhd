@@ -30,7 +30,7 @@ end bg_merge_norm;
 
 architecture Behavioral of bg_merge_norm is
     -- Add types here
-    type NodeStates is (idle, new_data, compute, data_out, sync);
+    type NodeStates is (idle, new_data, compute, compute1, data_out, sync);
     -- Add signals here
     signal NodeState : NodeStates;
 
