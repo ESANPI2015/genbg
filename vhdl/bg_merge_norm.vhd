@@ -202,6 +202,7 @@ begin
         end process AccumulatorProcess0;
 
         AccumulatorProcess1 : process (clk)
+            variable accumulate : std_logic_vector(1 downto 0);
         begin
             if rising_edge(clk) then
                 if rst = '1' then
@@ -210,6 +211,7 @@ begin
                     fp_add_start <= '0';
                     fp_sqrt_start <= '0';
                     fp_acc <= in_bias;
+                    accumulate := "00";
                     CalcState1 <= idle;
                 else
                     fp_out_req <= '0';
@@ -220,18 +222,19 @@ begin
                     case CalcState1 is
                         when idle =>
                             if (fp_out_req0 = '1') then
-                                if (fp_accumulate1 = "00") then
+                                fp_out_ack0 <= '1';
+                                accumulate := fp_accumulate1; -- we have to sample accumulate1 because AccumulatorProcess0 can change it!
+                                if (accumulate = "00") then
                                     fp_acc <= in_bias;   -- set accumulator to initial value
                                 else
                                     fp_acc <= fp_add_result; -- take last result during accumulation
                                 end if;
-                                fp_out_ack0 <= '1';
                                 fp_add_start <= '1';
                                 CalcState1 <= computing;
                             end if;
                         when computing =>
                             if (fp_add_rdy = '1') then
-                                if (fp_accumulate1 = "10") then
+                                if (accumulate = "10") then
                                     fp_sqrt_start <= '1';
                                     CalcState1 <= computing1;
                                 else

@@ -134,24 +134,27 @@ begin
         end process InputProcess;
 
         AccumulatorProcess : process (clk)
+            variable accumulate : std_logic_vector(1 downto 0);
         begin
             if rising_edge(clk) then
                 if rst = '1' then
                     fp_out_req <= '0';
-                    fp_start <= '0';
                     fp_in_ack <= '0';
+                    fp_start <= '0';
+                    accumulate := "00";
                     fp_acc <= in_bias;
                     CalcState <= idle;
                 else
                     fp_out_req <= '0';
-                    fp_start <= '0';
                     fp_in_ack <= '0';
+                    fp_start <= '0';
                     CalcState <= CalcState;
                     case CalcState is
                         when idle =>
                             if (fp_in_req = '1') then
                                 fp_in_ack <= '1';
-                                if (fp_accumulate = "00") then
+                                accumulate := fp_accumulate; -- we have to sample accumulate because InputProcess can change it!
+                                if (accumulate = "00") then
                                     fp_acc <= in_bias;   -- set accumulator to initial value
                                 else
                                     fp_acc <= fp_result; -- take last result during accumulation
@@ -161,11 +164,10 @@ begin
                             end if;
                         when computing =>
                             if (fp_rdy = '1') then
-                                if (fp_accumulate = "10") then
+                                CalcState <= idle;
+                                if (accumulate = "10") then
                                     fp_out_req <= '1';
                                     CalcState <= pushing;
-                                else
-                                    CalcState <= idle;
                                 end if;
                             end if;
                         when pushing =>

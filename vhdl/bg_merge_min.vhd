@@ -47,7 +47,7 @@ architecture Behavioral of bg_merge_min is
     -- FP stuff
     signal fp_opa : std_logic_vector(DATA_WIDTH-1 downto 0);
     signal fp_acc : std_logic_vector(DATA_WIDTH-1 downto 0);
-    alias  fp_result : std_logic_vector(DATA_WIDTH-1 downto 0) is fp_acc;
+    signal fp_result : std_logic_vector(DATA_WIDTH-1 downto 0);
     signal fp_start : std_logic;
     signal fp_rdy : std_logic;
     signal fp_accumulate : std_logic_vector(1 downto 0);
@@ -135,6 +135,7 @@ begin
         end process InputProcess;
 
         AccumulatorProcess : process (clk)
+            variable accumulate : std_logic_vector(1 downto 0);
         begin
             if rising_edge(clk) then
                 if rst = '1' then
@@ -142,6 +143,8 @@ begin
                     fp_start <= '0';
                     fp_in_ack <= '0';
                     fp_acc <= in_bias;
+                    fp_result <= in_bias;
+                    accumulate := "00";
                     CalcState <= idle;
                 else
                     fp_out_req <= '0';
@@ -152,19 +155,23 @@ begin
                         when idle =>
                             if (fp_in_req = '1') then
                                 fp_in_ack <= '1';
-                                if (fp_accumulate = "00") then
+                                accumulate := fp_accumulate; -- we have to sample accumulate because InputProcess can change it!
+                                if (accumulate = "00") then
                                     fp_acc <= in_bias;   -- set accumulator to initial value
+                                else
+                                    fp_acc <= fp_result;
                                 end if;
+                                fp_result <= fp_opa;     -- store opa to protect it from overwriting by InputProcess
                                 fp_start <= '1';
                                 CalcState <= computing;
                             end if;
                         when computing =>
                             if (fp_rdy = '1') then
                                 CalcState <= idle;
-                                if (fp_lesser = '1') then
-                                    fp_acc <= fp_opa;   -- update accumulator if opa has been lesser than acc
+                                if (fp_lesser = '0') then
+                                    fp_result <= fp_acc; -- fp_result is fp_opa, if opa is NOT lesser than fp_acc, overwrite
                                 end if;
-                                if (fp_accumulate = "10") then
+                                if (accumulate = "10") then
                                     fp_out_req <= '1';
                                     CalcState <= pushing;
                                 end if;
