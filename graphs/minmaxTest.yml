@@ -6,7 +6,7 @@ edges:
 nodes:
 - id: 4
   inputs:
-  - {idx: 0, bias: 100.0, default: 0.0, type: 'MIN'}
+  - {idx: 0, bias: 1000.0, default: 0.0, type: 'MIN'}
   type: 'OUTPUT'
 - id: 3
   inputs:
