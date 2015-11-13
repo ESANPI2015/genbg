@@ -137,8 +137,16 @@ static int addMerge(bg_generator_t *g, const bg_merge_type type, const unsigned 
         return id;
     }
 
+    switch (type)
+    {
+        case bg_MERGE_TYPE_NORM:
+            floatToStdLogicVec(temp, bias*bias);
+            break;
+        default:
+            floatToStdLogicVec(temp, bias);
+            break;
+    }
     sprintf(entry.token, "@mergeBias%u@", g->merges);
-    floatToStdLogicVec(temp, bias);
     snprintf(entry.repl, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "%u => %s, -- %ff\n@mergeBias%u@", g->merges, temp, bias, g->merges+1);
     writeDictionary(g->out, &entry);
     sprintf(entry.token, "@mergeInputs%u@", g->merges);
