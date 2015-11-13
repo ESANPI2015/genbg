@@ -30,9 +30,14 @@ end bg_merge_min;
 
 architecture Behavioral of bg_merge_min is
     -- Add types here
-    type NodeStates is (idle, new_data, compute, data_out, sync);
+    type InputStates is (idle, waiting, pushing);
+    type CalcStates is (idle, computing, pushing);
+    type OutputStates is (idle, pushing, sync);
+
     -- Add signals here
-    signal NodeState : NodeStates;
+    signal InputState : InputStates;
+    signal CalcState : CalcStates;
+    signal OutputState : OutputStates;
 
     signal internal_output_req : std_logic;
     signal internal_output_ack : std_logic;
@@ -41,12 +46,17 @@ architecture Behavioral of bg_merge_min is
 
     -- FP stuff
     signal fp_opa : std_logic_vector(DATA_WIDTH-1 downto 0);
-    signal fp_opb : std_logic_vector(DATA_WIDTH-1 downto 0);
-    signal fp_lesser : std_logic;
-
+    signal fp_acc : std_logic_vector(DATA_WIDTH-1 downto 0);
+    alias  fp_result : std_logic_vector(DATA_WIDTH-1 downto 0) is fp_acc;
     signal fp_start : std_logic;
     signal fp_rdy : std_logic;
-    signal fp_finished : std_logic; -- this is a flipflopped version
+    signal fp_accumulate : std_logic_vector(1 downto 0);
+    signal fp_lesser : std_logic;
+
+    signal fp_in_req : std_logic;
+    signal fp_in_ack : std_logic;
+    signal fp_out_req : std_logic;
+    signal fp_out_ack : std_logic;
 begin
     out_req <= internal_output_req;
     internal_output_ack <= out_ack;
@@ -60,126 +70,149 @@ begin
         port map (
                     clk_i => clk,
                     opa_i => fp_opa,
-                    opb_i => fp_opb,
+                    opb_i => fp_acc,
                     less_than_o => fp_lesser,
                     greater_than_o => open,
                     start_i => fp_start,
                     ready_o => fp_rdy
                  );
 
-        -- Process to detect if the fp stage has raised fp_rdy since last fp_start signal
-        process(clk)
-        begin
-            if rising_edge(clk) then
-                if rst = '1' then
-                    fp_finished <= '1';
-                else
-                    if (fp_start = '1') then
-                        fp_finished <= '0';
-                    elsif (fp_rdy = '1') then
-                        fp_finished <= '1';
-                    end if;
-                end if;
-            end if;
-        end process;
-
-        -- TODO: It might be better to ack after pushing data to the fp unit
-        NodeProcess : process(clk)
+        InputProcess : process(clk)
         begin
             if clk'event and clk = '1' then
                 if rst = '1' then
-                    in_ack <= (others => '0');
-                    internal_output_req <= '0';
+                    fp_in_req <= '0';
                     currInput <= 0;
-                    fp_start <= '0';
                     fp_opa <= (others => '0');
-                    fp_opb <= (others => '0');
-                    out_port <= (others => '0');
-                    NodeState <= idle;
+                    fp_accumulate <= "00";
+                    in_ack <= (others => '0');
+                    InputState <= idle;
                 else
-                    fp_start <= '0';
-                    if (halt = '0') then
-                        -- defaults
-                        case NodeState is
-                            when idle =>
-                                in_ack(currInput) <= '0';
-                                internal_output_req <= '0';
-                                if ((in_req(currInput) = '1') and (fp_finished = '1')) then
-                                    -- pass incoming data to opa
-                                    fp_opa <= in_port(currInput);
-                                    if (currInput = 0) then
-                                        -- when we have the first value, we should set opb to bias
-                                        fp_opb <= in_bias;
-                                    else
-                                        -- otherwise we assign the last opa to b if it is lesser
-                                        if (fp_lesser = '1') then
-                                            fp_opb <= fp_opa;
-                                        end if;
-                                    end if;
-                                    -- raise ack for currInput
-                                    in_ack(currInput) <= '1';
-                                    -- trigger fp_func and go to new data
-                                    fp_start <= '1';
-                                    NodeState <= new_data;
-                                else
-                                    NodeState <= idle;
-                                end if;
-
-                            when new_data =>
+                    fp_in_req <= '0';
+                    in_ack(currInput) <= '0';
+                    InputState <= InputState;
+                    case InputState is
+                        when idle =>
+                            if (in_req(currInput) = '1' and halt = '0') then
+                                -- pass incoming data to opa
+                                fp_opa <= in_port(currInput);
                                 in_ack(currInput) <= '1';
-                                internal_output_req <= '0';
-                                if (in_req(currInput) = '0') then
-                                    in_ack(currInput) <= '0';
-                                    if (currInput < NO_INPUTS-1) then
-                                        -- we still have inputs to process
-                                        currInput <= currInput + 1;
-                                        NodeState <= idle;
-                                    else
-                                        -- we have no more inputs to process
-                                        currInput <= 0;
-                                        NodeState <= compute;
-                                    end if;
+                                InputState <= waiting;
+                            end if;
+                        when waiting =>
+                            in_ack(currInput) <= '1';
+                            if (in_req(currInput) = '0') then
+                                in_ack(currInput) <= '0';
+                                if (currInput = 0) then
+                                    -- when we have the first value, we should reset the accumulator to in_bias
+                                    fp_accumulate <= "00";
+                                elsif (currInput = NO_INPUTS-1) then
+                                    -- when we have the last value, the accumulator signals the output process after accumulation
+                                    fp_accumulate <= "10";
                                 else
-                                    NodeState <= new_data;
+                                    -- otherwise we just accumulate
+                                    fp_accumulate <= "01";
                                 end if;
-
-                            when compute =>
-                                in_ack <= (others => '0');
-                                internal_output_req <= '0';
-                                -- wait for (last) computation to be finished
-                                if (fp_finished = '1') then
-                                    -- assign the lesser value to the output
-                                    if (fp_lesser = '1') then
-                                        out_port <= fp_opa;
-                                    else
-                                        out_port <= fp_opb;
-                                    end if;
-                                    NodeState <= data_out;
+                                fp_in_req <= '1';
+                                InputState <= pushing;
+                            end if;
+                        when pushing =>
+                            fp_in_req <= '1';
+                            if (fp_in_ack = '1') then
+                                fp_in_req <= '0';
+                                if (currInput < NO_INPUTS-1) then
+                                    -- we still have inputs to process
+                                    currInput <= currInput + 1;
                                 else
-                                    NodeState <= compute;
+                                    -- we have no more inputs to process, so we signal the OutputProcess
+                                    currInput <= 0;
                                 end if;
-                            when data_out =>
-                                in_ack <= (others => '0');
-                                internal_output_req <= '1';
-                                if (internal_output_ack = '1') then
-                                    internal_output_req <= '0';
-                                    NodeState <= sync;
-                                else
-                                    NodeState <= data_out;
-                                end if;
-                            when sync =>
-                                in_ack <= (others => '0');
-                                internal_output_req <= '0';
-                                if (internal_output_ack = '0') then
-                                    NodeState <= idle;
-                                else
-                                    NodeState <= sync;
-                                end if;
-                        end case;
-                    end if;
+                                InputState <= idle;
+                            end if;
+                    end case;
                 end if;
             end if;
-        end process NodeProcess;
+        end process InputProcess;
+
+        AccumulatorProcess : process (clk)
+        begin
+            if rising_edge(clk) then
+                if rst = '1' then
+                    fp_out_req <= '0';
+                    fp_start <= '0';
+                    fp_in_ack <= '0';
+                    fp_acc <= in_bias;
+                    CalcState <= idle;
+                else
+                    fp_out_req <= '0';
+                    fp_start <= '0';
+                    fp_in_ack <= '0';
+                    CalcState <= CalcState;
+                    case CalcState is
+                        when idle =>
+                            if (fp_in_req = '1') then
+                                fp_in_ack <= '1';
+                                if (fp_accumulate = "00") then
+                                    fp_acc <= in_bias;   -- set accumulator to initial value
+                                end if;
+                                fp_start <= '1';
+                                CalcState <= computing;
+                            end if;
+                        when computing =>
+                            if (fp_rdy = '1') then
+                                CalcState <= idle;
+                                if (fp_lesser = '1') then
+                                    fp_acc <= fp_opa;   -- update accumulator if opa has been lesser than acc
+                                end if;
+                                if (fp_accumulate = "10") then
+                                    fp_out_req <= '1';
+                                    CalcState <= pushing;
+                                end if;
+                            end if;
+                        when pushing =>
+                            fp_out_req <= '1';
+                            if (fp_out_ack = '1') then
+                                fp_out_req <= '0';
+                                CalcState <= idle;
+                            end if;
+                    end case;
+                end if;
+            end if;
+        end process AccumulatorProcess;
+
+        OutputProcess : process(clk)
+        begin
+            if rising_edge(clk) then
+                if rst = '1' then
+                    fp_out_ack <= '0';
+                    internal_output_req <= '0';
+                    out_port <= (others => '0');
+                    OutputState <= idle;
+                else
+                    fp_out_ack <= '0';
+                    internal_output_req <= '0';
+                    OutputState <= OutputState;
+                    case OutputState is
+                        when idle =>
+                            if (fp_out_req = '1') then
+                                out_port <= fp_result;
+                                fp_out_ack <= '1';
+                                OutputState <= pushing;
+                            end if;
+                        when pushing =>
+                            internal_output_req <= '1';
+                            if (internal_output_ack = '1') then
+                                internal_output_req <= '0';
+                                OutputState <= sync;
+                            end if;
+                        when sync =>
+                            if (internal_output_ack = '0') then
+                                OutputState <= idle;
+                            end if;
+                    end case;
+                end if;
+            end if;
+        end process OutputProcess;
     end generate;
 
 end Behavioral;
