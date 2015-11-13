@@ -129,7 +129,11 @@ static int addMerge(bg_generator_t *g, const bg_merge_type type, const unsigned 
                 id = addSource(g, sqrtf(bias * bias + defValue * defValue));
                 break;
             case bg_MERGE_TYPE_WEIGHTED_SUM:
+                id = addSource(g, bias);
+                break;
             case bg_MERGE_TYPE_MEAN:
+                id = addSource(g, defValue);
+                break;
             case bg_MERGE_TYPE_MEDIAN:
             default:
                 break;
