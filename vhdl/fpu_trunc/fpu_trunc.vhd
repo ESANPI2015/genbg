@@ -69,7 +69,8 @@ mux_select(1) <= pass_through;
 mux_select(0) <= is_neg;
 
 with mux_select select
-    s_output_o <= s_opa_i when "1X",
+    s_output_o <= s_opa_i when "10",
+                  s_opa_i when "11",
                   (others => '0') when "01",
                   s_opa_i(FP_WIDTH-1 downto dec_point) & ZERO_VECTOR(dec_point-1 downto 0) when "00";
 
