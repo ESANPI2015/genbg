@@ -103,15 +103,14 @@ begin
                             in_ack(currInput) <= '1';
                             if (in_req(currInput) = '0') then
                                 in_ack(currInput) <= '0';
+                                fp_accumulate <= "00";
+                                -- if we have the first value, we have to use in_bias as second operand
                                 if (currInput = 0) then
-                                    -- when we have the first value, we should reset the accumulator to in_bias
-                                    fp_accumulate <= "00";
-                                elsif (currInput = NO_INPUTS-1) then
-                                    -- when we have the last value, the accumulator signals the output process after accumulation
-                                    fp_accumulate <= "10";
-                                else
-                                    -- otherwise we just accumulate
-                                    fp_accumulate <= "01";
+                                    fp_accumulate(0) <= '1';
+                                end if;
+                                -- if we have the last value, we have to pass the result to the OutputProcess (both can be true!!!)
+                                if (currInput = NO_INPUTS-1) then
+                                    fp_accumulate(1) <= '1';
                                 end if;
                                 fp_in_req <= '1';
                                 InputState <= pushing;
@@ -156,10 +155,10 @@ begin
                             if (fp_in_req = '1') then
                                 fp_in_ack <= '1';
                                 accumulate := fp_accumulate; -- we have to sample accumulate because InputProcess can change it!
-                                if (accumulate = "00") then
+                                if (accumulate(0) = '1') then
                                     fp_acc <= in_bias;   -- set accumulator to initial value
                                 else
-                                    fp_acc <= fp_result;
+                                    fp_acc <= fp_result; -- take last result during accumulation
                                 end if;
                                 fp_result <= fp_opa;     -- store opa to protect it from overwriting by InputProcess
                                 fp_start <= '1';
@@ -171,7 +170,7 @@ begin
                                 if (fp_greater = '0') then
                                     fp_result <= fp_acc; -- fp_result is fp_opa, if opa is NOT greater than fp_acc, overwrite
                                 end if;
-                                if (accumulate = "10") then
+                                if (accumulate(1) = '1') then
                                     fp_out_req <= '1';
                                     CalcState <= pushing;
                                 end if;
