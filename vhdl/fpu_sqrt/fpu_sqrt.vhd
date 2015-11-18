@@ -180,7 +180,7 @@ begin
 		if rising_edge(clk_i) then
             ready_o <= '0';
             s_start_i <= '0';
-			if s_start_i ='1' then
+			if start_i ='1' then
 				s_state <= busy;
                 s_opa_i <= opa_i;
                 s_rmode_i <= rmode_i;

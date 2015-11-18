@@ -77,7 +77,7 @@ begin
     severity failure;
 
     GENERATE_FULL_MERGE : if (NO_INPUTS>0) generate
-        fp_mul : entity work.fpu_add(rtl)
+        fp_mul : entity work.fpu_mul(rtl)
         port map (
                     clk_i => clk,
                     opa_i => fp_opa,
@@ -226,18 +226,17 @@ begin
                                 if (accumulate(0) = '1') then
                                     fp_acc <= in_bias;   -- set accumulator to initial value
                                 else
-                                    fp_acc <= fp_result; -- take last result during accumulation
+                                    fp_acc <= fp_add_result; -- take last result during accumulation
                                 end if;
                                 fp_add_start <= '1';
                                 CalcState1 <= computing;
                             end if;
                         when computing =>
                             if (fp_add_rdy = '1') then
+                                CalcState1 <= idle;
                                 if (accumulate(1) = '1') then
                                     fp_sqrt_start <= '1';
                                     CalcState1 <= computing1;
-                                else
-                                    CalcState1 <= idle;
                                 end if;
                             end if;
                         when computing1 =>
