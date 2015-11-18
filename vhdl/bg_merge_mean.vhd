@@ -49,9 +49,12 @@ architecture Behavioral of bg_merge_mean is
     signal fp_opa : std_logic_vector(DATA_WIDTH-1 downto 0);
     signal fp_acc : std_logic_vector(DATA_WIDTH-1 downto 0);
     signal fp_div_result : std_logic_vector(DATA_WIDTH-1 downto 0);
+    signal fp_add_result : std_logic_vector(DATA_WIDTH-1 downto 0);
     signal fp_result : std_logic_vector(DATA_WIDTH-1 downto 0);
     signal fp_add_start : std_logic;
     signal fp_add_rdy : std_logic;
+    signal fp_add2_start : std_logic;
+    signal fp_add2_rdy : std_logic;
     signal fp_div_start : std_logic;
     signal fp_div_rdy : std_logic;
     signal fp_accumulate : std_logic_vector(1 downto 0);
@@ -78,19 +81,29 @@ begin
                     opa_i => fp_opa,
                     opb_i => fp_acc,
                     rmode_i => "00", -- round to nearest even
-                    output_o => fp_result,
+                    output_o => fp_add_result,
                     start_i => fp_add_start,
                     ready_o => fp_add_rdy
                  );
         fp_div : entity work.fpu_div(rtl)
         port map (
                     clk_i => clk,
-                    opa_i => fp_result,
+                    opa_i => fp_add_result,
                     opb_i => NO_INPUTS_F,
                     rmode_i => "00", -- round to nearest even
                     output_o => fp_div_result,
                     start_i => fp_div_start,
                     ready_o => fp_div_rdy
+                 );
+        fp_add2 : entity work.fpu_add(rtl)
+        port map (
+                    clk_i => clk,
+                    opa_i => fp_div_result,
+                    opb_i => in_bias,
+                    rmode_i => "00", -- round to nearest even
+                    output_o => fp_result,
+                    start_i => fp_add2_start,
+                    ready_o => fp_add2_rdy
                  );
 
         InputProcess : process(clk)
@@ -157,6 +170,7 @@ begin
                     fp_out_req <= '0';
                     fp_in_ack <= '0';
                     fp_add_start <= '0';
+                    fp_add2_start <= '0';
                     fp_div_start <= '0';
                     accumulate := "00";
                     fp_acc <= (others => '0');
@@ -165,6 +179,7 @@ begin
                     fp_out_req <= '0';
                     fp_in_ack <= '0';
                     fp_add_start <= '0';
+                    fp_add2_start <= '0';
                     fp_div_start <= '0';
                     CalcState <= CalcState;
                     case CalcState is
@@ -175,7 +190,7 @@ begin
                                 if (accumulate(0) = '1') then
                                     fp_acc <= (others => '0');   -- set accumulator to initial value
                                 else
-                                    fp_acc <= fp_result; -- take last result during accumulation
+                                    fp_acc <= fp_add_result; -- take last result during accumulation
                                 end if;
                                 fp_add_start <= '1';
                                 CalcState <= computing;
@@ -190,13 +205,11 @@ begin
                             end if;
                         when computing1 =>
                             if (fp_div_rdy = '1') then
-                                fp_opa <= in_bias;
-                                fp_acc <= fp_div_result;
-                                fp_add_start <= '1';
+                                fp_add2_start <= '1';
                                 CalcState <= computing2;
                             end if;
                         when computing2 =>
-                            if (fp_add_rdy = '1') then
+                            if (fp_add2_rdy = '1') then
                                 fp_out_req <= '1';
                                 CalcState <= pushing;
                             end if;
