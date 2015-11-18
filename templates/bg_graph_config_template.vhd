@@ -133,7 +133,7 @@ package bg_graph_@name@_config is
     -----
     -- Merge types and constant bias
     ----
-    type merge_type_t is (none, simple_sum, sum, simple_prod, prod, max, min, simple_norm, norm); -- simple* will be replaced by pipe
+    type merge_type_t is (none, simple_sum, sum, simple_prod, prod, max, min, simple_norm, norm, mean, wsum); -- simple* will be replaced by pipe
     type merge_types_t is array (NO_MERGES downto 0) of merge_type_t;
     type merge_bias_t is array (NO_MERGES downto 0) of std_logic_vector(DATA_WIDTH-1 downto 0);
     type merge_output_ports_t is array(NO_MERGES-1 downto 0) of std_logic_vector(DATA_WIDTH-1 downto 0);
@@ -152,6 +152,11 @@ package bg_graph_@name@_config is
     (
         @mergeInputs0@
         others => 0 -- dummy
+    );
+    constant MERGE_INPUTS_F : merge_bias_t :=
+    (
+        @mergeInputsFloat0@
+        others => (x"00000000") -- dummy
     );
     -- NOTE: We need the maximum number of merge inputs to generate signals for the merges
     constant MAX_MERGE_INPUTS : integer := find_max_int(MERGE_INPUTS); -- this has to be equal to the max of the MERGE_INPUTS array

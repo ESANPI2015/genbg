@@ -277,6 +277,26 @@ begin
                      );
             end generate;
 
+        GENERATE_MERGE_MEAN : if (MERGE_TYPE(i) = mean) generate
+            merge_mean : bg_merge_mean
+            generic map (
+                            NO_INPUTS => MERGE_INPUTS(i),
+                            NO_INPUTS_F => MERGE_INPUTS_F(i)
+                        )
+            port map (
+                        clk => clk,
+                        rst => rst,
+                        halt => halt,
+                        in_bias  => MERGE_BIAS(i),
+                        in_port  => to_merge(i)(MERGE_INPUTS(i)-1 downto 0),
+                        in_req   => to_merge_req(i)(MERGE_INPUTS(i)-1 downto 0),
+                        in_ack   => to_merge_ack(i)(MERGE_INPUTS(i)-1 downto 0),
+                        out_port => from_merge(i),
+                        out_req  => from_merge_req(i),
+                        out_ack  => from_merge_ack(i)
+                     );
+            end generate;
+
         GENERATE_MERGE_PROD : if (MERGE_TYPE(i) = prod) generate
             merge_prod : bg_merge_prod
             generic map (

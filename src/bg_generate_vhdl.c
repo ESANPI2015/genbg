@@ -192,6 +192,17 @@ static int addMerge(bg_generator_t *g, const bg_merge_type type, const unsigned 
             break;
         case bg_MERGE_TYPE_WEIGHTED_SUM:
         case bg_MERGE_TYPE_MEAN:
+            /*OPTIMIZATION RULE: Iff inputs = 1 produce sum merge*/
+            if (inputs == 1)
+            {
+                /*OPTIMIZATION RULE: Iff inputs = 1 and bias = 0.0f produce simple merge*/
+                if (bias == 0.0f)
+                    snprintf(entry.repl, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "%u => simple_sum,\n@mergeType%u@", g->merges, g->merges+1);
+                else
+                    snprintf(entry.repl, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "%u => sum,\n@mergeType%u@", g->merges, g->merges+1);
+            } else
+                snprintf(entry.repl, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "%u => mean,\n@mergeType%u@", g->merges, g->merges+1);
+            break;
         case bg_MERGE_TYPE_MEDIAN:
         default:
             return id;
