@@ -55,6 +55,27 @@ static void addConnection(bg_generator_t *g, const char* from, const unsigned in
     g->connections++;
 }
 
+static void addSingleConnection(bg_generator_t *g, const char* from, const unsigned int fidx, const int foutput, const char *to, const unsigned int tidx, const int tinput)
+{
+    dictEntry entry;
+    char temp[TEMPLATE_ENGINE_MAX_STRING_LENGTH];
+
+    sprintf(entry.token, "@connection%u@", g->connections);
+    if (tinput < 0)
+        snprintf(entry.repl, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "%s(%u) <= ", to, tidx);
+    else
+        snprintf(entry.repl, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "%s(%u)(%u) <= ", to, tidx, (unsigned int)tinput);
+    if (foutput < 0)
+        snprintf(temp, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "%s(%u);\n", from, fidx);
+    else
+        snprintf(temp, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "%s(%u)(%u);\n", from, fidx, (unsigned int)foutput);
+    strncat(entry.repl, temp, TEMPLATE_ENGINE_MAX_STRING_LENGTH);
+    snprintf(temp, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "\n@connection%u@", g->connections+1);
+    strncat(entry.repl, temp, TEMPLATE_ENGINE_MAX_STRING_LENGTH);
+    writeDictionary(g->out, &entry);
+    g->connections++;
+}
+
 static unsigned int addEdge(bg_generator_t *g, const float weight, const unsigned int isBackedge)
 {
     dictEntry entry;
@@ -156,6 +177,10 @@ static int addMerge(bg_generator_t *g, const bg_merge_type type, const unsigned 
     sprintf(entry.token, "@mergeInputs%u@", g->merges);
     snprintf(entry.repl, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "%u => %u,\n@mergeInputs%u@", g->merges, inputs, g->merges+1);
     writeDictionary(g->out, &entry);
+    sprintf(entry.token, "@mergeInputsFloat%u@", g->merges);
+    floatToStdLogicVec(temp, (float)inputs);
+    snprintf(entry.repl, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "%u => %s, -- %ff\n@mergeInputsFloat%u@", g->merges, temp, (float)inputs, g->merges+1);
+    writeDictionary(g->out, &entry);
 
     sprintf(entry.token, "@mergeType%u@", g->merges);
     switch (type)
@@ -190,7 +215,6 @@ static int addMerge(bg_generator_t *g, const bg_merge_type type, const unsigned 
             else
                 snprintf(entry.repl, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "%u => norm,\n@mergeType%u@", g->merges, g->merges+1);
             break;
-        case bg_MERGE_TYPE_WEIGHTED_SUM:
         case bg_MERGE_TYPE_MEAN:
             /*OPTIMIZATION RULE: Iff inputs = 1 produce sum merge*/
             if (inputs == 1)
@@ -202,6 +226,9 @@ static int addMerge(bg_generator_t *g, const bg_merge_type type, const unsigned 
                     snprintf(entry.repl, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "%u => sum,\n@mergeType%u@", g->merges, g->merges+1);
             } else
                 snprintf(entry.repl, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "%u => mean,\n@mergeType%u@", g->merges, g->merges+1);
+            break;
+        case bg_MERGE_TYPE_WEIGHTED_SUM:
+            snprintf(entry.repl, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "%u => wsum,\n@mergeType%u@", g->merges, g->merges+1);
             break;
         case bg_MERGE_TYPE_MEDIAN:
         default:
@@ -274,6 +301,9 @@ bg_error bg_node_generate(bg_generator_t *g, bg_node_t *n, const unsigned int lv
             }
             // III. connect edges to merge
             addConnection(g, "edge", edgeId, -1, "merge", mergeId[i], j);
+            // SPECIAL RULE 4: Connect edge weights to weighted sum merge
+            if (n->input_ports[i]->merge->id == bg_MERGE_TYPE_WEIGHTED_SUM)
+                addSingleConnection(g, "EDGE_WEIGHTS", edgeId, -1, "merge_wsum_weights", mergeId[i], j);
         }
     }
 
@@ -539,6 +569,10 @@ bg_error bg_generator_finalize(bg_generator_t *generator)
     writeDictionary(generator->out, &entry);
     /*Finalize mergeInputs section*/
     sprintf(entry.token, "@mergeInputs%u@", generator->merges);
+    sprintf(entry.repl, "-- DONE");
+    writeDictionary(generator->out, &entry);
+    /*Finalize mergeInputsFloat section*/
+    sprintf(entry.token, "@mergeInputsFloat%u@", generator->merges);
     sprintf(entry.repl, "-- DONE");
     writeDictionary(generator->out, &entry);
     /*Finalize copyOutputs section*/

@@ -66,6 +66,8 @@ architecture Behavioral of bg_graph_@name@ is
     signal from_merge      : merge_output_ports_t;
     signal from_merge_req  : merge_output_signals_t;
     signal from_merge_ack  : merge_output_signals_t;
+    -- SPECIAL: weights for weighted sum
+    signal merge_wsum_weights : merge_input_ports_t;
     -- for each copy
     signal to_copy         : copy_input_ports_t;
     signal to_copy_req     : copy_input_signals_t;
@@ -307,6 +309,26 @@ begin
                         rst => rst,
                         halt => halt,
                         in_bias  => MERGE_BIAS(i),
+                        in_port  => to_merge(i)(MERGE_INPUTS(i)-1 downto 0),
+                        in_req   => to_merge_req(i)(MERGE_INPUTS(i)-1 downto 0),
+                        in_ack   => to_merge_ack(i)(MERGE_INPUTS(i)-1 downto 0),
+                        out_port => from_merge(i),
+                        out_req  => from_merge_req(i),
+                        out_ack  => from_merge_ack(i)
+                     );
+            end generate;
+
+        GENERATE_MERGE_WSUM : if (MERGE_TYPE(i) = wsum) generate
+            merge_wsum : bg_merge_wsum
+            generic map (
+                            NO_INPUTS => MERGE_INPUTS(i)
+                        )
+            port map (
+                        clk => clk,
+                        rst => rst,
+                        halt => halt,
+                        in_bias  => MERGE_BIAS(i),
+                        in_weights => merge_wsum_weights(i)(MERGE_INPUTS(i)-1 downto 0),
                         in_port  => to_merge(i)(MERGE_INPUTS(i)-1 downto 0),
                         in_req   => to_merge_req(i)(MERGE_INPUTS(i)-1 downto 0),
                         in_ack   => to_merge_ack(i)(MERGE_INPUTS(i)-1 downto 0),
