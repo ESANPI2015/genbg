@@ -42,28 +42,23 @@ begin
                 out_port <= (others => '0');
                 NodeState <= idle;
             else
-                if (halt = '0') then
-                    -- defaults
-                    case NodeState is
-                        when idle =>
-                            internal_input_ack <= '0';
-                            if (internal_input_req = '1') then
-                                out_port <= in_port; -- direct passing to output
-                                internal_input_ack <= '1';
-                                NodeState <= new_data;
-                            else
-                                NodeState <= idle;
-                            end if;
-                        when new_data =>
+                NodeState <= NodeState;
+                -- defaults
+                case NodeState is
+                    when idle =>
+                        internal_input_ack <= '0';
+                        if (internal_input_req = '1' and halt = '0') then
+                            out_port <= in_port; -- direct passing to output
                             internal_input_ack <= '1';
-                            if (internal_input_req = '0') then
-                                internal_input_ack <= '0';
-                                NodeState <= idle;
-                            else
-                                NodeState <= new_data;
-                            end if;
-                    end case;
-                end if;
+                            NodeState <= new_data;
+                        end if;
+                    when new_data =>
+                        internal_input_ack <= '1';
+                        if (internal_input_req = '0') then
+                            internal_input_ack <= '0';
+                            NodeState <= idle;
+                        end if;
+                end case;
             end if;
         end if;
     end process NodeProcess;

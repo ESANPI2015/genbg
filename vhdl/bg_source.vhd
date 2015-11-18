@@ -42,30 +42,27 @@ begin
                 out_port <= (others => '0');
                 NodeState <= idle;
             else
-                if (halt = '0') then
-                    -- defaults
-                    case NodeState is
-                        when idle =>
-                            internal_output_req <= '0';
-                            out_port <= in_port; -- sample input port
+                -- defaults
+                NodeState <= NodeState;
+                case NodeState is
+                    when idle =>
+                        internal_output_req <= '0';
+                        out_port <= in_port; -- sample input port
+                        if (halt = '0') then
                             NodeState <= data_out;
-                        when data_out =>
-                            internal_output_req <= '1';
-                            if (internal_output_ack = '1') then
-                                internal_output_req <= '0';
-                                NodeState <= sync;
-                            else
-                                NodeState <= data_out;
-                            end if;
-                        when sync =>
+                        end if;
+                    when data_out =>
+                        internal_output_req <= '1';
+                        if (internal_output_ack = '1') then
                             internal_output_req <= '0';
-                            if (internal_output_ack = '0') then
-                                NodeState <= idle;
-                            else
-                                NodeState <= sync;
-                            end if;
-                    end case;
-                end if;
+                            NodeState <= sync;
+                        end if;
+                    when sync =>
+                        internal_output_req <= '0';
+                        if (internal_output_ack = '0') then
+                            NodeState <= idle;
+                        end if;
+                end case;
             end if;
         end if;
     end process NodeProcess;
