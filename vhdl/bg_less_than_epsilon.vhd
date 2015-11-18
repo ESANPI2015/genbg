@@ -69,50 +69,37 @@ begin
                 out_port <= (others => '0');
                 NodeState <= idle;
             else
-                if (halt = '0') then
-                    -- defaults
-                    case NodeState is
-                        when idle =>
-                            internal_input_ack <= '0';
-                            internal_output_req <= '0';
-                            if (internal_input_req = '1') then
-                                rest <= in_port(0)(DATA_WIDTH-2 downto 0);
-                                port1 <= in_port(1);
-                                port2 <= in_port(2);
-                                internal_input_ack <= '1';
-                                NodeState <= new_data;
-                            else
-                                NodeState <= idle;
-                            end if;
-                        when new_data =>
+                internal_input_ack <= '0';
+                internal_output_req <= '0';
+                NodeState <= NodeState;
+                -- defaults
+                case NodeState is
+                    when idle =>
+                        if (internal_input_req = '1' and halt = '0') then
+                            rest <= in_port(0)(DATA_WIDTH-2 downto 0);
+                            port1 <= in_port(1);
+                            port2 <= in_port(2);
                             internal_input_ack <= '1';
-                            internal_output_req <= '0';
-                            if (internal_input_req = '0') then
-                                out_port <= result;
-                                internal_input_ack <= '0';
-                                NodeState <= data_out;
-                            else
-                                NodeState <= new_data;
-                            end if;
-                        when data_out =>
+                            NodeState <= new_data;
+                        end if;
+                    when new_data =>
+                        internal_input_ack <= '1';
+                        if (internal_input_req = '0') then
+                            out_port <= result;
                             internal_input_ack <= '0';
-                            internal_output_req <= '1';
-                            if (internal_output_ack = '1') then
-                                internal_output_req <= '0';
-                                NodeState <= sync;
-                            else
-                                NodeState <= data_out;
-                            end if;
-                        when sync =>
-                            internal_input_ack <= '0';
+                            NodeState <= data_out;
+                        end if;
+                    when data_out =>
+                        internal_output_req <= '1';
+                        if (internal_output_ack = '1') then
                             internal_output_req <= '0';
-                            if (internal_output_ack = '0') then
-                                NodeState <= idle;
-                            else
-                                NodeState <= sync;
-                            end if;
-                    end case;
-                end if;
+                            NodeState <= sync;
+                        end if;
+                    when sync =>
+                        if (internal_output_ack = '0') then
+                            NodeState <= idle;
+                        end if;
+                end case;
             end if;
         end if;
     end process NodeProcess;

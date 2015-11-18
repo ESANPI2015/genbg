@@ -42,11 +42,11 @@ begin
                 out_port <= (others => '0');
                 NodeState <= idle;
             else
+                internal_input_ack <= '0';
                 NodeState <= NodeState;
                 -- defaults
                 case NodeState is
                     when idle =>
-                        internal_input_ack <= '0';
                         if (internal_input_req = '1' and halt = '0') then
                             out_port <= in_port; -- direct passing to output
                             internal_input_ack <= '1';

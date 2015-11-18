@@ -43,12 +43,12 @@ begin
                 NodeState <= idle;
             else
                 -- defaults
+                internal_output_req <= '0';
                 NodeState <= NodeState;
                 case NodeState is
                     when idle =>
-                        internal_output_req <= '0';
-                        out_port <= in_port; -- sample input port
                         if (halt = '0') then
+                            out_port <= in_port; -- sample input port
                             NodeState <= data_out;
                         end if;
                     when data_out =>
@@ -58,7 +58,6 @@ begin
                             NodeState <= sync;
                         end if;
                     when sync =>
-                        internal_output_req <= '0';
                         if (internal_output_ack = '0') then
                             NodeState <= idle;
                         end if;

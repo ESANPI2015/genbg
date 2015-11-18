@@ -63,12 +63,12 @@ begin
                 out_port <= (others => '0');
                 NodeState <= InitialState;
             else
+                internal_input_ack <= '0';
+                internal_output_req <= '0';
                 NodeState <= NodeState;
                 -- defaults
                 case NodeState is
                     when idle =>
-                        internal_input_ack <= '0';
-                        internal_output_req <= '0';
                         if (internal_input_req = '1' and halt = '0') then
                             out_port <= in_port; -- direct passing to output
                             internal_input_ack <= '1';
@@ -82,15 +82,12 @@ begin
                             NodeState <= data_out;
                         end if;
                     when data_out =>
-                        internal_input_ack <= '0';
                         internal_output_req <= '1';
                         if (internal_output_ack = '1') then
                             internal_output_req <= '0';
                             NodeState <= sync;
                         end if;
                     when sync =>
-                        internal_input_ack <= '0';
-                        internal_output_req <= '0';
                         if (internal_output_ack = '0') then
                             NodeState <= idle;
                         end if;
