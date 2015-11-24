@@ -347,6 +347,13 @@ bg_error bg_node_generate(bg_generator_t *g, bg_node_t *n, const unsigned int lv
             nodeId = g->unaryNodes++;
             sprintf(nodeType, "unary");
             break;
+        case bg_NODE_TYPE_ACOS:
+            sprintf(entry.token, "@unaryType%u@", g->unaryNodes);
+            snprintf(entry.repl, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "%u => acos,\n@unaryType%u@", g->unaryNodes, g->unaryNodes+1);
+            writeDictionary(g->out, &entry);
+            nodeId = g->unaryNodes++;
+            sprintf(nodeType, "unary");
+            break;
         case bg_NODE_TYPE_SIN:
             sprintf(entry.token, "@unaryType%u@", g->unaryNodes);
             snprintf(entry.repl, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "%u => sine,\n@unaryType%u@", g->unaryNodes, g->unaryNodes+1);
@@ -354,6 +361,13 @@ bg_error bg_node_generate(bg_generator_t *g, bg_node_t *n, const unsigned int lv
             nodeId = g->unaryNodes++;
             sprintf(nodeType, "unary");
             break;
+        /*case bg_NODE_TYPE_ASIN:*/
+            /*sprintf(entry.token, "@unaryType%u@", g->unaryNodes);*/
+            /*snprintf(entry.repl, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "%u => asin,\n@unaryType%u@", g->unaryNodes, g->unaryNodes+1);*/
+            /*writeDictionary(g->out, &entry);*/
+            /*nodeId = g->unaryNodes++;*/
+            /*sprintf(nodeType, "unary");*/
+            /*break;*/
         case bg_NODE_TYPE_TAN:
             sprintf(entry.token, "@unaryType%u@", g->unaryNodes);
             snprintf(entry.repl, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "%u => tan,\n@unaryType%u@", g->unaryNodes, g->unaryNodes+1);
@@ -392,7 +406,6 @@ bg_error bg_node_generate(bg_generator_t *g, bg_node_t *n, const unsigned int lv
         case bg_NODE_TYPE_SUBGRAPH:
             err = bg_graph_generate(g, ((subgraph_data_t*)n->_priv_data)->subgraph, lvl+1);
             break;
-        case bg_NODE_TYPE_ACOS:
         case bg_NODE_TYPE_ATAN2:
         case bg_NODE_TYPE_POW:
         case bg_NODE_TYPE_TANH:

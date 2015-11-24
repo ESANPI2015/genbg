@@ -488,8 +488,36 @@ begin
                     out_ack => from_unary_ack(i)(0)
                      );
                  end generate;
+        GENERATE_ACOS : if (UNARY_TYPES(i) = acos) generate
+            acos : bg_acos
+            port map (
+                    clk => clk,
+                    rst => rst,
+                    halt => halt,
+                    in_port => to_unary(i)(0),
+                    in_req => to_unary_req(i)(0),
+                    in_ack => to_unary_ack(i)(0),
+                    out_port => from_unary(i)(0),
+                    out_req => from_unary_req(i)(0),
+                    out_ack => from_unary_ack(i)(0)
+                     );
+                 end generate;
         GENERATE_SINE : if (UNARY_TYPES(i) = sine) generate
             sine : bg_sine
+            port map (
+                    clk => clk,
+                    rst => rst,
+                    halt => halt,
+                    in_port => to_unary(i)(0),
+                    in_req => to_unary_req(i)(0),
+                    in_ack => to_unary_ack(i)(0),
+                    out_port => from_unary(i)(0),
+                    out_req => from_unary_req(i)(0),
+                    out_ack => from_unary_ack(i)(0)
+                     );
+                 end generate;
+        GENERATE_ASIN : if (UNARY_TYPES(i) = asin) generate
+            asin : bg_asin
             port map (
                     clk => clk,
                     rst => rst,
