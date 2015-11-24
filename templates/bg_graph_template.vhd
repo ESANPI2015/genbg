@@ -576,6 +576,20 @@ begin
                     out_ack => from_binary_ack(i)(0)
                      );
                  end generate;
+        GENERATE_ATAN2 : if (BINARY_TYPES(i) = atan2) generate
+            atan2 : bg_atan2
+            port map (
+                    clk => clk,
+                    rst => rst,
+                    halt => halt,
+                    in_port => to_binary(i),
+                    in_req => to_binary_req(i),
+                    in_ack => to_binary_ack(i),
+                    out_port => from_binary(i)(0),
+                    out_req => from_binary_req(i)(0),
+                    out_ack => from_binary_ack(i)(0)
+                     );
+                 end generate;
         end generate;
 
     -- instantiate ternary nodes
