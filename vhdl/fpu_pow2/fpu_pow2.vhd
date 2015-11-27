@@ -33,7 +33,7 @@ end fpu_pow2;
 
 architecture rtl of fpu_pow2 is
 
-type lookup_t is array(FP_WIDTH-EXP_WIDTH-2 downto 0) of std_logic_vector(FP_WIDTH-1 downto 0);
+type lookup_t is array(FP_WIDTH-EXP_WIDTH-2 downto 1) of std_logic_vector(FP_WIDTH-1 downto 0);
 type t_state is (
                 idle,
                 compute,
@@ -51,9 +51,9 @@ signal exponent : signed(EXP_WIDTH-1 downto 0);
 signal pre_shift : std_logic_vector(FP_WIDTH-2 downto 0);
 signal post_shift : std_logic_vector(FP_WIDTH-2 downto 0);
 signal new_exponent : signed(EXP_WIDTH-1 downto 0);
-signal powm : std_logic_vector(FP_WIDTH-1 downto 0);
-signal bit_cnt : integer range 0 to FP_WIDTH-EXP_WIDTH-2;
-signal lut_addr : integer range 0 to FP_WIDTH-EXP_WIDTH-2;
+--signal powm : std_logic_vector(FP_WIDTH-1 downto 0);
+signal bit_cnt : integer range 1 to FP_WIDTH-EXP_WIDTH-2;
+signal lut_addr : integer range 1 to FP_WIDTH-EXP_WIDTH-2;
 signal s_inf_o, s_nan_o : std_logic;
 
 signal fp_mul_opa : std_logic_vector(FP_WIDTH-1 downto 0);
@@ -86,8 +86,8 @@ constant lookup : lookup_t :=
     4 => x"3f80000b", -- 1.000001f
     3 => x"3f800005", -- 1.000001f
     2 => x"3f800002", -- 1.000000f
-    1 => x"3f800001", -- 1.000000f
-    0 => x"3f800000" -- 1.000000f
+    1 => x"3f800001" -- 1.000000f
+    --0 => x"3f800000" -- 1.000000f
 );
 constant lookup2 : lookup_t :=
 (
@@ -112,8 +112,8 @@ constant lookup2 : lookup_t :=
     4 => x"3f7fffea", -- 0.999999f
     3 => x"3f7ffff6", -- 0.999999f
     2 => x"3f7ffffc", -- 1.000000f
-    1 => x"3f7ffffe", -- 1.000000f
-    0 => x"3f800000" -- 1.000000f
+    1 => x"3f7ffffe" -- 1.000000f
+    --0 => x"3f800000" -- 1.000000f
 );
 
 begin
@@ -134,10 +134,9 @@ begin
         begin
             if rising_edge(clk_i) then
                 -- switch table according to sign of incoming operand
+                sqrt_value <= lookup(lut_addr);  -- sqrt(2)
                 if (s_opa_i(FP_WIDTH-1) = '1') then
                     sqrt_value <= lookup2(lut_addr); -- 1/sqrt(2)
-                else
-                    sqrt_value <= lookup(lut_addr);  -- sqrt(2)
                 end if;
             end if;
         end process;
@@ -147,14 +146,15 @@ begin
 	if rising_edge(clk_i) then
         ready_o <= '0';
         fp_mul_start <= '0';
+        fp_mul_opb <= sqrt_value;
         s_state <= s_state;
         case s_state is
             when idle =>
+                bit_cnt <= FP_WIDTH-EXP_WIDTH-2;
                 if start_i ='1' then
                     s_opa_i <= opa_i;
                     pre_shift <= ZERO_VECTOR(FP_WIDTH-2 downto FP_WIDTH-EXP_WIDTH) & "1" & opa_i(FP_WIDTH-EXP_WIDTH-2 downto 0);
                     exponent <= signed(opa_i(FP_WIDTH-2 downto FP_WIDTH-EXP_WIDTH-1)) - 127;
-                    bit_cnt <= FP_WIDTH-EXP_WIDTH-2;
                     s_state <= compute;
                 end if;
             when compute =>
@@ -174,22 +174,20 @@ begin
                 lut_addr <= bit_cnt;
                 s_state <= compute2;
             when compute2 =>
-                powm <= "0" & std_logic_vector(new_exponent) & ZERO_VECTOR(FP_WIDTH-EXP_WIDTH-2 downto 0);
+                fp_mul_opa <= "0" & std_logic_vector(new_exponent) & ZERO_VECTOR(FP_WIDTH-EXP_WIDTH-2 downto 0);
                 -- prefetch
                 lut_addr <= lut_addr - 1;
                 s_state <= compute3;
             when compute3 =>
-                if (bit_cnt = 0) then
+                bit_cnt <= bit_cnt - 1;
+                if (bit_cnt = 1) then
                     -- we are finished
                     ready_o <= '1';
-                    output_o <= powm;
+                    output_o <= fp_mul_opa;
                     s_state <= idle;
                 else
-                    bit_cnt <= bit_cnt - 1;
                     if (post_shift(bit_cnt) = '1') then
                         -- start mul
-                        fp_mul_opa <= powm;
-                        fp_mul_opb <= sqrt_value;
                         fp_mul_start <= '1';
                         s_state <= compute4;
                     else
@@ -198,11 +196,11 @@ begin
                     end if;
                 end if;
             when compute4 =>
+                -- update fp_mul_opa
+                fp_mul_opa <= fp_mul_result;
                 if (fp_mul_rdy = '1') then
                     -- prefetch
                     lut_addr <= lut_addr - 1;
-                    -- update powm
-                    powm <= fp_mul_result;
                     s_state <= compute3;
                 end if;
         end case;

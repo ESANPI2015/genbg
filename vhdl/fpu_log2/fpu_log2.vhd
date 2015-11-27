@@ -33,7 +33,7 @@ end fpu_log2;
 
 architecture rtl of fpu_log2 is
 
-type lookup_t is array(FP_WIDTH-EXP_WIDTH-2 downto 0) of std_logic_vector(FP_WIDTH-1 downto 0);
+type lookup_t is array(FP_WIDTH-EXP_WIDTH-2 downto 1) of std_logic_vector(FP_WIDTH-1 downto 0);
 type t_state is (
                 idle,
                 compute,
@@ -52,9 +52,9 @@ signal exponent_std : std_logic_vector(EXP_WIDTH-1 downto 0);
 signal leading_zeros : std_logic_vector(5 downto 0);
 signal nlz : natural range 0 to 8;
 signal new_exponent : signed(EXP_WIDTH-1 downto 0);
-signal logm : std_logic_vector(FP_WIDTH-1 downto 0);
-signal bit_cnt : integer range 0 to FP_WIDTH-EXP_WIDTH-2;
-signal lut_addr : integer range 0 to FP_WIDTH-EXP_WIDTH-2;
+--signal logm : std_logic_vector(FP_WIDTH-1 downto 0);
+signal bit_cnt : integer range 1 to FP_WIDTH-EXP_WIDTH-2;
+signal lut_addr : integer range 1 to FP_WIDTH-EXP_WIDTH-2;
 signal s_inf_o, s_nan_o : std_logic;
 
 signal fp_mul_opa : std_logic_vector(FP_WIDTH-1 downto 0);
@@ -94,8 +94,8 @@ constant lookup : lookup_t :=
     4 => x"3f80000b", -- 1.000001f
     3 => x"3f800005", -- 1.000001f
     2 => x"3f800002", -- 1.000000f
-    1 => x"3f800001", -- 1.000000f
-    0 => x"3f800000" -- 1.000000f
+    1 => x"3f800001" -- 1.000000f
+    --0 => x"3f800000" -- 1.000000f
 );
 constant lookup2 : lookup_t :=
 (
@@ -120,8 +120,8 @@ constant lookup2 : lookup_t :=
     4 => x"3f7fffea", -- 0.999999f
     3 => x"3f7ffff6", -- 0.999999f
     2 => x"3f7ffffc", -- 1.000000f
-    1 => x"3f7ffffe", -- 1.000000f
-    0 => x"3f800000" -- 1.000000f
+    1 => x"3f7ffffe" -- 1.000000f
+    --0 => x"3f800000" -- 1.000000f
 );
 
 begin
@@ -162,18 +162,29 @@ begin
 process(clk_i)
 begin
 	if rising_edge(clk_i) then
+        -- real defaults
         ready_o <= '0';
         fp_mul_start <= '0';
         fp_add_start <= '0';
+        new_exponent <= (others => '0');
+        fp_add_opb <= (others => '0');
+        fp_mul_opb <= sqrt_value_inv;
+        -- pseudo defaults
         s_state <= s_state;
+        --bit_cnt <= bit_cnt;
+        --lut_addr <= lut_addr;
+        --exponent <= exponent;
+        --nlz <= nlz;
+        --fp_add_opa <= fp_add_opa;
+        --fp_mul_opa <= fp_mul_opb;
         case s_state is
             when idle =>
+                bit_cnt <= FP_WIDTH-EXP_WIDTH-2;
                 if start_i ='1' then
                     s_opa_i <= opa_i;
                     -- get the exponent (-126 - 127)
                     exponent <= signed(opa_i(FP_WIDTH-2 downto FP_WIDTH-EXP_WIDTH-1)) - 127;
                     s_state <= compute;
-                    bit_cnt <= FP_WIDTH-EXP_WIDTH-2;
                 end if;
             when compute =>
                 -- count number of leading zeros of the absolute value of the exponent
@@ -181,7 +192,6 @@ begin
                 s_state <= compute1;
             when compute1 =>
                 -- derive new_exponent
-                new_exponent <= (others => '0');
                 if (nlz < 8) then
                     new_exponent <= 127 + to_signed(EXP_WIDTH-1 - nlz, 8); -- range: 7,0
                 end if;
@@ -190,13 +200,13 @@ begin
                 s_state <= compute2;
             when compute2 =>
                 -- compose the start value of the logarithm of 2^exponent = exponent (TODO: We should do the sum backwards!)
-                logm <= (others => '0');
-                logm(FP_WIDTH-2 downto FP_WIDTH-EXP_WIDTH-1) <= std_logic_vector(new_exponent);
+                fp_add_opa <= (others => '0');
+                fp_add_opa(FP_WIDTH-2 downto FP_WIDTH-EXP_WIDTH-1) <= std_logic_vector(new_exponent);
                 if (nlz < 7) then
-                    logm(FP_WIDTH-EXP_WIDTH-2 downto FP_WIDTH-2*EXP_WIDTH+nlz) <= exponent_std(EXP_WIDTH-2-nlz downto 0);
+                    fp_add_opa(FP_WIDTH-EXP_WIDTH-2 downto FP_WIDTH-2*EXP_WIDTH+nlz) <= exponent_std(EXP_WIDTH-2-nlz downto 0);
                 end if;
                 if (exponent < 0) then
-                    logm(FP_WIDTH-1) <= '1';
+                    fp_add_opa(FP_WIDTH-1) <= '1';
                 end if;
                 -- prepare MUL value = (1.m)*2^0
                 fp_mul_opa <= (others => '1');
@@ -206,21 +216,18 @@ begin
                 lut_addr <= lut_addr - 1;
                 s_state <= compute3;
             when compute3 =>
-                if (bit_cnt = 0) then
+                bit_cnt <= bit_cnt - 1;
+                fp_add_opb(FP_WIDTH-2 downto FP_WIDTH-EXP_WIDTH-1) <= std_logic_vector(to_signed(bit_cnt - (FP_WIDTH-EXP_WIDTH-1), 8)+127);
+                if (bit_cnt = 1) then
                     -- we are finished
                     ready_o <= '1';
-                    output_o <= logm;
+                    output_o <= fp_add_opa;
                     s_state <= idle;
                 else
-                    bit_cnt <= bit_cnt - 1;
                     if (unsigned(fp_mul_opa(FP_WIDTH-2 downto 0)) >= unsigned(sqrt_value(FP_WIDTH-2 downto 0))) then
                         -- start mul
-                        fp_mul_opb <= sqrt_value_inv;
                         fp_mul_start <= '1';
                         -- start add
-                        fp_add_opa <= logm;
-                        fp_add_opb <= (others => '0');
-                        fp_add_opb(FP_WIDTH-2 downto FP_WIDTH-EXP_WIDTH-1) <= std_logic_vector(to_signed(bit_cnt - (FP_WIDTH-EXP_WIDTH-1), 8)+127);
                         fp_add_start <= '1';
                         s_state <= compute4;
                     else
@@ -229,13 +236,13 @@ begin
                     end if;
                 end if;
             when compute4 =>
+                -- update opa
+                fp_mul_opa <= fp_mul_result;
+                -- update fp_add_opa
+                fp_add_opa <= fp_add_result;
                 if (fp_mul_rdy = '1') then
                     -- prefetch
                     lut_addr <= lut_addr - 1;
-                    -- update opa
-                    fp_mul_opa <= fp_mul_result;
-                    -- update logm
-                    logm <= fp_add_result;
                     s_state <= compute3;
                 end if;
         end case;
