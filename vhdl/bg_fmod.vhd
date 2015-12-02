@@ -134,23 +134,22 @@ begin
                 fp_div_start <= '0';
                 ComputeState0 <= idle;
             else
+                fp_out_req0 <= '0';
                 fp_in_ack <= '0';
                 fp_div_start <= '0';
                 ComputeState0 <= ComputeState0;
                 case ComputeState0 is
                     when idle =>
-                        fp_out_req0 <= '0';
                         if (fp_in_req = '1') then
                             fp_in_ack <= '1';
                             fp_div_start <= '1';
+                            fp_opa1 <= fp_opa;
+                            fp_opb1 <= fp_opb;
                             ComputeState0 <= computing;
                         end if;
                     when computing =>
-                        fp_out_req0 <= '0';
                         if (fp_div_rdy = '1') then
                             fp_out_req0 <= '1';
-                            fp_opa1 <= fp_opa;
-                            fp_opb1 <= fp_opb;
                             ComputeState0 <= pushing;
                         end if;
                     when pushing =>
@@ -173,23 +172,22 @@ begin
                 fp_trunc_start <= '0';
                 ComputeState1 <= idle;
             else
+                fp_out_req1 <= '0';
                 fp_out_ack0 <= '0';
                 fp_trunc_start <= '0';
                 ComputeState1 <= ComputeState1;
                 case ComputeState1 is
                     when idle =>
-                        fp_out_req1 <= '0';
                         if (fp_out_req0 = '1') then
                             fp_out_ack0 <= '1';
                             fp_trunc_start <= '1';
+                            fp_opa2 <= fp_opa1;
+                            fp_opb2 <= fp_opb1;
                             ComputeState1 <= computing;
                         end if;
                     when computing =>
-                        fp_out_req1 <= '0';
                         if (fp_trunc_rdy = '1') then
                             fp_out_req1 <= '1';
-                            fp_opa2 <= fp_opa1;
-                            fp_opb2 <= fp_opb1;
                             ComputeState1 <= pushing;
                         end if;
                     when pushing =>
@@ -212,22 +210,21 @@ begin
                 fp_mul_start <= '0';
                 ComputeState2 <= idle;
             else
+                fp_out_req2 <= '0';
                 fp_out_ack1 <= '0';
                 fp_mul_start <= '0';
                 ComputeState2 <= ComputeState2;
                 case ComputeState2 is
                     when idle =>
-                        fp_out_req2 <= '0';
                         if (fp_out_req1 = '1') then
                             fp_out_ack1 <= '1';
                             fp_mul_start <= '1';
+                            fp_opa3 <= fp_opa2;
                             ComputeState2 <= computing;
                         end if;
                     when computing =>
-                        fp_out_req2 <= '0';
                         if (fp_mul_rdy = '1') then
                             fp_out_req2 <= '1';
-                            fp_opa3 <= fp_opa2;
                             ComputeState2 <= pushing;
                         end if;
                     when pushing =>
@@ -250,19 +247,18 @@ begin
                 fp_sub_start <= '0';
                 ComputeState3 <= idle;
             else
+                fp_out_req <= '0';
                 fp_out_ack2 <= '0';
                 fp_sub_start <= '0';
                 ComputeState3 <= ComputeState3;
                 case ComputeState3 is
                     when idle =>
-                        fp_out_req <= '0';
                         if (fp_out_req2 = '1') then
                             fp_out_ack2 <= '1';
                             fp_sub_start <= '1';
                             ComputeState3 <= computing;
                         end if;
                     when computing =>
-                        fp_out_req <= '0';
                         if (fp_sub_rdy = '1') then
                             fp_out_req <= '1';
                             ComputeState3 <= pushing;
