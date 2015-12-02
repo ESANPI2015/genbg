@@ -89,7 +89,7 @@ package bg_graph_@name@_config is
     type binary_input_signals_t is array (NO_BINARY-1 downto 0) of DATA_SIGNAL(1 downto 0);
     type binary_output_ports_t is array (NO_BINARY-1 downto 0) of DATA_PORT(0 downto 0);
     type binary_output_signals_t is array (NO_BINARY-1 downto 0) of DATA_SIGNAL(0 downto 0);
-    type binary_type_t is (none, fmod, atan2);
+    type binary_type_t is (none, fmod, atan2, pow);
     type binary_types_t is array (NO_BINARY downto 0) of binary_type_t;
     constant BINARY_TYPES : binary_types_t :=
     (

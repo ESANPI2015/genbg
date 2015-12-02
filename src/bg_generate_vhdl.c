@@ -396,6 +396,13 @@ bg_error bg_node_generate(bg_generator_t *g, bg_node_t *n, const unsigned int lv
             nodeId = g->binaryNodes++;
             sprintf(nodeType, "binary");
             break;
+        case bg_NODE_TYPE_POW:
+            sprintf(entry.token, "@binaryType%u@", g->binaryNodes);
+            snprintf(entry.repl, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "%u => pow,\n@binaryType%u@", g->binaryNodes, g->binaryNodes+1);
+            writeDictionary(g->out, &entry);
+            nodeId = g->binaryNodes++;
+            sprintf(nodeType, "binary");
+            break;
         case bg_NODE_TYPE_GREATER_THAN_0:
             sprintf(entry.token, "@ternaryType%u@", g->ternaryNodes);
             snprintf(entry.repl, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "%u => greater_than_zero,\n@ternaryType%u@", g->ternaryNodes, g->ternaryNodes+1);
@@ -413,7 +420,6 @@ bg_error bg_node_generate(bg_generator_t *g, bg_node_t *n, const unsigned int lv
         case bg_NODE_TYPE_SUBGRAPH:
             err = bg_graph_generate(g, ((subgraph_data_t*)n->_priv_data)->subgraph, lvl+1);
             break;
-        case bg_NODE_TYPE_POW:
         case bg_NODE_TYPE_TANH:
         case bg_NODE_TYPE_FSIGMOID:
         case bg_NODE_TYPE_EXTERN:
