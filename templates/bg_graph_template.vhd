@@ -178,9 +178,6 @@ begin
              end generate;
         GENERATE_SIMPLE_EDGE : if (EDGE_TYPES(i) = simple) generate
             simpleedge : bg_edge_simple
-            generic map (
-                            IS_BACKEDGE => false
-                        )
             port map (
                     clk => clk,
                     rst => rst,
@@ -196,6 +193,41 @@ begin
         GENERATE_SIMPLE_BACKEDGE : if (EDGE_TYPES(i) = simple_backedge) generate
             simplebackedge : bg_edge_simple
             generic map (
+                            IS_BACKEDGE => true
+                        )
+            port map (
+                    clk => clk,
+                    rst => rst,
+                    halt => halt,
+                    in_port => to_edge(i),
+                    in_req => to_edge_req(i),
+                    in_ack => to_edge_ack(i),
+                    out_port => from_edge(i),
+                    out_req => from_edge_req(i),
+                    out_ack => from_edge_ack(i)
+                     );
+             end generate;
+        GENERATE_SIMPLE_INV_EDGE : if (EDGE_TYPES(i) = simple_inv) generate
+            simpleinvedge : bg_edge_simple
+            generic map (
+                            INVERTS => true
+                        )
+            port map (
+                    clk => clk,
+                    rst => rst,
+                    halt => halt,
+                    in_port => to_edge(i),
+                    in_req => to_edge_req(i),
+                    in_ack => to_edge_ack(i),
+                    out_port => from_edge(i),
+                    out_req => from_edge_req(i),
+                    out_ack => from_edge_ack(i)
+                     );
+             end generate;
+        GENERATE_SIMPLE_INV_BACKEDGE : if (EDGE_TYPES(i) = simple_inv_backedge) generate
+            simpleinvbackedge : bg_edge_simple
+            generic map (
+                            INVERTS => true,
                             IS_BACKEDGE => true
                         )
             port map (

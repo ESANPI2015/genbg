@@ -89,18 +89,22 @@ static unsigned int addEdge(bg_generator_t *g, const float weight, const unsigne
     if (isBackedge)
     {
         /*OPTIMIZATION RULE: Iff weight = 1.0f produce simple backedge*/
-        /*TODO: There is another possible optimization for weight=-1.0f. This needs another simple_backedge_inv version*/
-        if (weight == 1.0f)
+        if (weight == 1.0f) {
             snprintf(entry.repl, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "%u => simple_backedge,\n@edgeType%u@", g->edges, g->edges+1);
-        else
+        } else if (weight == -1.0f) {
+            snprintf(entry.repl, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "%u => simple_inv_backedge,\n@edgeType%u@", g->edges, g->edges+1);
+        } else {
             snprintf(entry.repl, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "%u => backedge,\n@edgeType%u@", g->edges, g->edges+1);
+        }
     } else {
         /*OPTIMIZATION RULE: Iff weight = 1.0f produce simple edge*/
-        /*TODO: There is another possible optimization for weight=-1.0f. This needs another simple_inv version*/
-        if (weight == 1.0f)
+        if (weight == 1.0f) {
             snprintf(entry.repl, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "%u => simple,\n@edgeType%u@", g->edges, g->edges+1);
-        else
-            snprintf(entry.repl, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "@edgeType%u@", g->edges+1);
+        } else if (weight == -1.0f) {
+            snprintf(entry.repl, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "%u => simple_inv,\n@edgeType%u@", g->edges, g->edges+1);
+        } else {
+            snprintf(entry.repl, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "%u => normal,\n@edgeType%u@", g->edges, g->edges+1);
+        }
     }
     writeDictionary(g->out, &entry);
     return g->edges++;
@@ -361,13 +365,13 @@ bg_error bg_node_generate(bg_generator_t *g, bg_node_t *n, const unsigned int lv
             nodeId = g->unaryNodes++;
             sprintf(nodeType, "unary");
             break;
-        /*case bg_NODE_TYPE_ASIN:*/
-            /*sprintf(entry.token, "@unaryType%u@", g->unaryNodes);*/
-            /*snprintf(entry.repl, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "%u => asin,\n@unaryType%u@", g->unaryNodes, g->unaryNodes+1);*/
-            /*writeDictionary(g->out, &entry);*/
-            /*nodeId = g->unaryNodes++;*/
-            /*sprintf(nodeType, "unary");*/
-            /*break;*/
+        case bg_NODE_TYPE_ASIN:
+            sprintf(entry.token, "@unaryType%u@", g->unaryNodes);
+            snprintf(entry.repl, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "%u => asin,\n@unaryType%u@", g->unaryNodes, g->unaryNodes+1);
+            writeDictionary(g->out, &entry);
+            nodeId = g->unaryNodes++;
+            sprintf(nodeType, "unary");
+            break;
         case bg_NODE_TYPE_TAN:
             sprintf(entry.token, "@unaryType%u@", g->unaryNodes);
             snprintf(entry.repl, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "%u => tan,\n@unaryType%u@", g->unaryNodes, g->unaryNodes+1);
@@ -378,6 +382,20 @@ bg_error bg_node_generate(bg_generator_t *g, bg_node_t *n, const unsigned int lv
         /*case bg_NODE_TYPE_ATAN:*/
             /*sprintf(entry.token, "@unaryType%u@", g->unaryNodes);*/
             /*snprintf(entry.repl, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "%u => atan,\n@unaryType%u@", g->unaryNodes, g->unaryNodes+1);*/
+            /*writeDictionary(g->out, &entry);*/
+            /*nodeId = g->unaryNodes++;*/
+            /*sprintf(nodeType, "unary");*/
+            /*break;*/
+        /*case bg_NODE_TYPE_EXP:*/
+            /*sprintf(entry.token, "@unaryType%u@", g->unaryNodes);*/
+            /*snprintf(entry.repl, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "%u => exp,\n@unaryType%u@", g->unaryNodes, g->unaryNodes+1);*/
+            /*writeDictionary(g->out, &entry);*/
+            /*nodeId = g->unaryNodes++;*/
+            /*sprintf(nodeType, "unary");*/
+            /*break;*/
+        /*case bg_NODE_TYPE_LOG:*/
+            /*sprintf(entry.token, "@unaryType%u@", g->unaryNodes);*/
+            /*snprintf(entry.repl, TEMPLATE_ENGINE_MAX_STRING_LENGTH, "%u => log,\n@unaryType%u@", g->unaryNodes, g->unaryNodes+1);*/
             /*writeDictionary(g->out, &entry);*/
             /*nodeId = g->unaryNodes++;*/
             /*sprintf(nodeType, "unary");*/

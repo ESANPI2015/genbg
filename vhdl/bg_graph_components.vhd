@@ -32,6 +32,7 @@ package bg_graph_components is
 
 	component bg_edge_simple is
         generic (
+                    INVERTS : boolean := false;
                     IS_BACKEDGE : boolean := false
                 );
         port(

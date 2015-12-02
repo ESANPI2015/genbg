@@ -8,6 +8,7 @@ use work.bg_vhdl_types.all;
 
 entity bg_edge_simple is
     generic (
+                INVERTS : boolean := false;
                 IS_BACKEDGE : boolean := false
             );
     port(
@@ -38,6 +39,8 @@ architecture Behavioral of bg_edge_simple is
     signal internal_output_req : std_logic;
     signal internal_output_ack : std_logic;
 
+    signal temp : std_logic_vector(DATA_WIDTH-1 downto 0);
+
 begin
 
     GEN_BACK_EDGE : if (IS_BACKEDGE = true) generate
@@ -52,6 +55,14 @@ begin
     in_ack <= internal_input_ack;
     out_req <= internal_output_req;
     internal_output_ack <= out_ack;
+
+    temp(DATA_WIDTH-2 downto 0) <= in_port(DATA_WIDTH-2 downto 0);
+    GEN_INVERTING_EDGE : if (INVERTS = true) generate
+        temp(DATA_WIDTH-1) <= not in_port(DATA_WIDTH-1);
+    end generate;
+    GEN_NONINVERTING_EDGE : if (INVERTS = false) generate
+        temp(DATA_WIDTH-1) <= in_port(DATA_WIDTH-1);
+    end generate;
 
     -- Add processes here
     NodeProcess : process(clk)
@@ -70,7 +81,7 @@ begin
                 case NodeState is
                     when idle =>
                         if (internal_input_req = '1' and halt = '0') then
-                            out_port <= in_port; -- direct passing to output
+                            out_port <= temp; -- direct passing to output
                             internal_input_ack <= '1';
                             NodeState <= new_data;
                         end if;

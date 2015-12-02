@@ -56,7 +56,7 @@ package bg_graph_@name@_config is
     type edge_ports_t is array (NO_EDGES-1 downto 0) of std_logic_vector(DATA_WIDTH-1 downto 0);
     type edge_signals_t is array (NO_EDGES-1 downto 0) of std_logic;
     type edge_weights_t is array (NO_EDGES downto 0) of std_logic_vector(DATA_WIDTH-1 downto 0);
-    type edge_type_t is (simple, normal, simple_backedge, backedge); -- simple* will be replaced by bg_edge_simple
+    type edge_type_t is (simple, simple_inv, normal, simple_backedge, simple_inv_backedge, backedge); -- simple* will be replaced by bg_edge_simple
     type edge_types_t is array (NO_EDGES downto 0) of edge_type_t;
     constant EDGE_WEIGHTS : edge_weights_t := 
     (

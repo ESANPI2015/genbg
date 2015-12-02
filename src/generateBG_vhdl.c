@@ -66,5 +66,19 @@ int main (int argc, char *argv[])
 
     fclose(out);
 
+    printf("--- SUMMARY ---\n");
+    printf("Nodes: %u\n", gen.nodes);
+    printf("Edges: %u\n", gen.edges);
+    printf("Inputs: %u\n", gen.toplvl_inputs);
+    printf("Outputs: %u\n", gen.toplvl_outputs);
+    printf("\n--- SUMMARY (VHDL)---\n");
+    printf("Sources: %u\n", gen.sources);
+    printf("Sinks: %u\n", gen.sinks);
+    printf("Copies: %u\n", gen.copies);
+    printf("Merges: %u\n", gen.merges);
+    printf("Unaries: %u\n", gen.unaryNodes);
+    printf("Binaries: %u\n", gen.binaryNodes);
+    printf("Ternaries: %u\n", gen.ternaryNodes);
+
     exit(EXIT_SUCCESS);
 }

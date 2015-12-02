@@ -66,5 +66,11 @@ int main (int argc, char *argv[])
 
     fclose(out);
 
+    printf("--- SUMMARY ---\n");
+    printf("Nodes: %u\n", gen.nodes);
+    printf("Edges: %u\n", gen.edges);
+    printf("Inputs: %u\n", gen.toplvl_inputs);
+    printf("Outputs: %u\n", gen.toplvl_outputs);
+
     exit(EXIT_SUCCESS);
 }
