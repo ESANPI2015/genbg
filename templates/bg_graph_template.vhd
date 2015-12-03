@@ -590,6 +590,34 @@ begin
                     out_ack => from_unary_ack(i)(0)
                      );
                  end generate;
+        GENERATE_LOG : if (UNARY_TYPES(i) = log) generate
+            log : bg_log
+            port map (
+                    clk => clk,
+                    rst => rst,
+                    halt => halt,
+                    in_port => to_unary(i)(0),
+                    in_req => to_unary_req(i)(0),
+                    in_ack => to_unary_ack(i)(0),
+                    out_port => from_unary(i)(0),
+                    out_req => from_unary_req(i)(0),
+                    out_ack => from_unary_ack(i)(0)
+                     );
+                 end generate;
+        GENERATE_EXP : if (UNARY_TYPES(i) = exp) generate
+            exp : bg_exp
+            port map (
+                    clk => clk,
+                    rst => rst,
+                    halt => halt,
+                    in_port => to_unary(i)(0),
+                    in_req => to_unary_req(i)(0),
+                    in_ack => to_unary_ack(i)(0),
+                    out_port => from_unary(i)(0),
+                    out_req => from_unary_req(i)(0),
+                    out_ack => from_unary_ack(i)(0)
+                     );
+                 end generate;
         end generate;
 
     -- instantiate binary nodes

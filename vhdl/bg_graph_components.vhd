@@ -187,6 +187,40 @@ package bg_graph_components is
             );
     end component;
 
+	component bg_exp is
+        port(
+        -- Inputs
+            in_port : in std_logic_vector(DATA_WIDTH-1 downto 0);
+            in_req : in std_logic;
+            in_ack : out std_logic;
+        -- Outputs
+            out_port : out std_logic_vector(DATA_WIDTH-1 downto 0);
+            out_req : out std_logic;
+            out_ack : in std_logic;
+        -- Other signals
+            halt : in std_logic;
+            rst : in std_logic;
+            clk : in std_logic
+            );
+    end component;
+
+	component bg_log is
+        port(
+        -- Inputs
+            in_port : in std_logic_vector(DATA_WIDTH-1 downto 0);
+            in_req : in std_logic;
+            in_ack : out std_logic;
+        -- Outputs
+            out_port : out std_logic_vector(DATA_WIDTH-1 downto 0);
+            out_req : out std_logic;
+            out_ack : in std_logic;
+        -- Other signals
+            halt : in std_logic;
+            rst : in std_logic;
+            clk : in std_logic
+            );
+    end component;
+
 	component bg_abs is
         port(
         -- Inputs
