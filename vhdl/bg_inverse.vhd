@@ -120,8 +120,8 @@ begin
                             OutputState <= waiting;
                         end if;
                     when waiting =>
+                        out_port <= fp_result;
                         if (fp_rdy = '1') then
-                            out_port <= fp_result;
                             OutputState <= pushing;
                         end if;
                     when pushing =>

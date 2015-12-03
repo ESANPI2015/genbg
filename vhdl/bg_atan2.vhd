@@ -134,16 +134,6 @@ begin
     out_req <= internal_output_req;
     internal_output_ack <= out_ack;
 
-    -- get inner interval
-    process(dout)
-    begin
-        if (unsigned(dout(DATA_WIDTH-2 downto 0)) > unsigned(one(DATA_WIDTH-2 downto 0))) then -- |dout| greater 1
-            inner_interval <= '0';
-        else
-            inner_interval <= '1';
-        end if;
-    end process;
-
     -- arcus tangens calculation
     process(clk)
     begin
@@ -197,25 +187,30 @@ begin
                             CalcState <= sync;
                         end if;
                     when divide =>
+                        dout <= fp_div_result;
+                        if (unsigned(fp_div_result(DATA_WIDTH-2 downto 0)) > unsigned(one(DATA_WIDTH-2 downto 0))) then -- |x| greater 1
+                            inner_interval <= '0';
+                        else
+                            inner_interval <= '1';
+                        end if;
                         if (fp_div_rdy = '1') then
-                            dout <= fp_div_result;
                             CalcState <= atangens;
                         end if;
 
                     -- NORMAL ATAN
                     when atangens =>
                         -- Decide whether to calc with x or 1/x
+                        fp_div_opa <= one;
                         fp_div_opb <= dout;
                         if (inner_interval = '0') then
-                            fp_div_opa <= one;
                             fp_div_start <= '1';
                             CalcState <= atangens1;
                         else
                             CalcState <= atangens2;
                         end if;
                     when atangens1 =>
+                        fp_div_opb <= fp_div_result;
                         if (fp_div_rdy = '1') then
-                            fp_div_opb <= fp_div_result;
                             CalcState <= atangens2;
                         end if;
                     when atangens2 =>
@@ -229,69 +224,69 @@ begin
                         fp_sub_start <= '1';
                         CalcState <= atangens3;
                     when atangens3 =>
+                        fp_mul_opa <= fp_sub_result; -- store sub result
+                        fp_sub_opa <= atan_param1;
+                        fp_sub_opb <= "1" & fp_mul_result(DATA_WIDTH-2 downto 0);
                         if (fp_mul_rdy = '1') then
-                            fp_mul_opa <= fp_sub_result; -- store sub result
                             -- Calc: param1 + param2 * |x'|
-                            fp_sub_opa <= atan_param1;
-                            fp_sub_opb <= "1" & fp_mul_result(DATA_WIDTH-2 downto 0);
                             fp_sub_start <= '1';
                             CalcState <= atangens4;
                         end if;
                     when atangens4 =>
+                        fp_mul_opb <= fp_sub_result;
                         if (fp_sub_rdy = '1') then
                             -- Calc: (|x'| - 1) * (param1 + param2 * |x'|)
-                            fp_mul_opb <= fp_sub_result;
                             fp_mul_start <= '1';
                             CalcState <= atangens5;
                         end if;
                     when atangens5 =>
+                        fp_mul_opa <= fp_div_opb;
+                        fp_mul_opb <= fp_mul_result;
                         if (fp_mul_rdy = '1') then
                             -- Calc: x' * previous
-                            fp_mul_opa <= fp_div_opb;
-                            fp_mul_opb <= fp_mul_result;
                             fp_mul_start <= '1';
                             CalcState <= atangens6;
                         end if;
                     when atangens6 =>
+                        fp_sub_opb <= fp_mul_result; -- store mul result
+                        fp_mul_opa <= pi_div_4;
+                        fp_mul_opb <= fp_div_opb;
                         if (fp_mul_rdy = '1') then
-                            fp_sub_opb <= fp_mul_result; -- store mul result
                             -- Calc: pi/4 * x'
-                            fp_mul_opa <= pi_div_4;
-                            fp_mul_opb <= fp_div_opb;
                             fp_mul_start <= '1';
                             CalcState <= atangens7;
                         end if;
                     when atangens7 =>
+                        fp_sub_opa <= fp_mul_result;
                         if (fp_mul_rdy = '1') then
                             -- Calc: pi/4 * x' - x'*(|x'|-1)*(param1+param2*|x'|)
-                            fp_sub_opa <= fp_mul_result;
                             fp_sub_start <= '1';
                             CalcState <= fix_outer_interval;
                         end if;
                     when fix_outer_interval =>
+                        fp_sub_opa <= dout(DATA_WIDTH-1) & pi_div_2(DATA_WIDTH-2 downto 0);
+                        fp_sub_opb <= fp_sub_result;
                         if (fp_sub_rdy = '1') then
                             -- Calc: sgn(x)*pi/2 - previous(x') iff |x| > 1
-                            fp_sub_opa <= dout(DATA_WIDTH-1) & pi_div_2(DATA_WIDTH-2 downto 0);
-                            fp_sub_opb <= fp_sub_result;
-                            CalcState <= waiting;
                             dout <= fp_sub_result;
                             if (inner_interval = '1') then
                                 CalcState <= fix_atan;
                             else
                                 fp_sub_start <= '1';
+                                CalcState <= waiting;
                             end if;
                         end if;
                     when waiting =>
+                        dout <= fp_sub_result;
                         if (fp_sub_rdy = '1') then
-                            dout <= fp_sub_result;
                             CalcState <= fix_atan;
                         end if;
                     -- NORMAL ATAN END
 
                     when fix_atan =>
+                        fp_sub_opa <= dout;
+                        fp_sub_opb <= not sgn_y & pi(DATA_WIDTH-2 downto 0);
                         if (x_less_zero = '1') then
-                            fp_sub_opa <= dout;
-                            fp_sub_opb <= not sgn_y & pi(DATA_WIDTH-2 downto 0);
                             fp_sub_start <= '1';
                             CalcState <= fix_atan2;
                         else
@@ -299,8 +294,8 @@ begin
                             CalcState <= sync;
                         end if;
                     when fix_atan2 =>
+                        dout <= fp_sub_result;
                         if (fp_sub_rdy = '1') then
-                            dout <= fp_sub_result;
                             fp_out_req <= '1';
                             CalcState <= sync;
                         end if;

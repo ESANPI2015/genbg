@@ -147,16 +147,6 @@ begin
     out_req <= internal_output_req;
     internal_output_ack <= out_ack;
 
-    -- get inner interval
-    process(dout)
-    begin
-        if (unsigned(dout(DATA_WIDTH-2 downto 0)) > unsigned(one(DATA_WIDTH-2 downto 0))) then -- |dout| greater 1
-            inner_interval <= '0';
-        else
-            inner_interval <= '1';
-        end if;
-    end process;
-
     -- arcus tangens calculation
     process(clk)
     begin
@@ -193,55 +183,60 @@ begin
                         fp_mul_start <= '1';
                         CalcState <= acosinus1;
                     when acosinus1 =>
+                        fp_sub_opa <= one;
+                        fp_sub_opb <= fp_mul_result;
                         if (fp_mul_rdy = '1') then
                             -- Calc 1-x^2
-                            fp_sub_opa <= one;
-                            fp_sub_opb <= fp_mul_result;
                             fp_sub_start <= '1';
                             CalcState <= acosinus2;
                         end if;
                     when acosinus2 =>
+                        fp_sqrt_op <= fp_sub_result;
                         if (fp_sub_rdy = '1') then
                             -- Calc sqrt(1-x^2)
-                            fp_sqrt_op <= fp_sub_result;
                             fp_sqrt_start <= '1';
                             CalcState <= acosinus3;
                         end if;
                     when acosinus3 =>
+                        fp_sub_opa <= fp_sqrt_result;
+                        fp_sub_opb <= "1" & one(DATA_WIDTH-2 downto 0);
                         if (fp_sqrt_rdy = '1') then
                             -- Calc 1 + sqrt(...)
-                            fp_sub_opa <= fp_sqrt_result;
-                            fp_sub_opb <= "1" & one(DATA_WIDTH-2 downto 0);
                             fp_sub_start <= '1';
                             CalcState <= acosinus4;
                         end if;
                     when acosinus4 =>
+                        fp_div_opa <= dout;
+                        fp_div_opb <= fp_sub_result;
                         if (fp_sub_rdy = '1') then
                             -- Calc x/(1 + sqrt(...))
-                            fp_div_opa <= dout;
-                            fp_div_opb <= fp_sub_result;
                             fp_div_start <= '1';
                             CalcState <= acosinus5;
                         end if;
                     when acosinus5 =>
+                        if (unsigned(fp_div_result(DATA_WIDTH-2 downto 0)) > unsigned(one(DATA_WIDTH-2 downto 0))) then -- |x'| greater 1
+                            inner_interval <= '0';
+                        else
+                            inner_interval <= '1';
+                        end if;
+                        dout <= fp_div_result; -- store incoming argument
+                        fp_div_opb <= fp_div_result;
                         if (fp_div_rdy = '1') then
                             -- Now start calc of atan(x/(1+sqrt(...)))
-                            dout <= fp_div_result;
                             CalcState <= atangens;
                         end if;
                     when atangens =>
+                        fp_div_opa <= one;
                         -- Decide whether to calc with x or 1/x
-                        fp_div_opb <= dout;
                         if (inner_interval = '0') then
-                            fp_div_opa <= one;
                             fp_div_start <= '1';
                             CalcState <= atangens1;
                         else
                             CalcState <= atangens2;
                         end if;
                     when atangens1 =>
+                        fp_div_opb <= fp_div_result;
                         if (fp_div_rdy = '1') then
-                            fp_div_opb <= fp_div_result;
                             CalcState <= atangens2;
                         end if;
                     when atangens2 =>
@@ -255,61 +250,61 @@ begin
                         fp_sub_start <= '1';
                         CalcState <= atangens3;
                     when atangens3 =>
+                        fp_mul_opa <= fp_sub_result; -- store sub result
+                        fp_sub_opa <= atan_param1;
+                        fp_sub_opb <= "1" & fp_mul_result(DATA_WIDTH-2 downto 0);
                         if (fp_mul_rdy = '1') then
-                            fp_mul_opa <= fp_sub_result; -- store sub result
                             -- Calc: param1 + param2 * |x'|
-                            fp_sub_opa <= atan_param1;
-                            fp_sub_opb <= "1" & fp_mul_result(DATA_WIDTH-2 downto 0);
                             fp_sub_start <= '1';
                             CalcState <= atangens4;
                         end if;
                     when atangens4 =>
+                        fp_mul_opb <= fp_sub_result;
                         if (fp_sub_rdy = '1') then
                             -- Calc: (|x'| - 1) * (param1 + param2 * |x'|)
-                            fp_mul_opb <= fp_sub_result;
                             fp_mul_start <= '1';
                             CalcState <= atangens5;
                         end if;
                     when atangens5 =>
+                        fp_mul_opa <= fp_div_opb;
+                        fp_mul_opb <= fp_mul_result;
                         if (fp_mul_rdy = '1') then
                             -- Calc: x' * previous
-                            fp_mul_opa <= fp_div_opb;
-                            fp_mul_opb <= fp_mul_result;
                             fp_mul_start <= '1';
                             CalcState <= atangens6;
                         end if;
                     when atangens6 =>
+                        fp_sub_opb <= fp_mul_result; -- store mul result
+                        fp_mul_opa <= pi_div_4;
+                        fp_mul_opb <= fp_div_opb;
                         if (fp_mul_rdy = '1') then
-                            fp_sub_opb <= fp_mul_result; -- store mul result
                             -- Calc: pi/4 * x'
-                            fp_mul_opa <= pi_div_4;
-                            fp_mul_opb <= fp_div_opb;
                             fp_mul_start <= '1';
                             CalcState <= atangens7;
                         end if;
                     when atangens7 =>
+                        fp_sub_opa <= fp_mul_result;
                         if (fp_mul_rdy = '1') then
                             -- Calc: pi/4 * x' - x'*(|x'|-1)*(param1+param2*|x'|)
-                            fp_sub_opa <= fp_mul_result;
                             fp_sub_start <= '1';
                             CalcState <= fix_outer_interval;
                         end if;
                     when fix_outer_interval =>
+                        fp_sub_opa <= dout(DATA_WIDTH-1) & pi_div_2(DATA_WIDTH-2 downto 0);
+                        fp_sub_opb <= fp_sub_result;
                         if (fp_sub_rdy = '1') then
                             -- Calc: sgn(x)*pi/2 - previous(x') iff |x| > 1
-                            fp_sub_opa <= dout(DATA_WIDTH-1) & pi_div_2(DATA_WIDTH-2 downto 0);
-                            fp_sub_opb <= fp_sub_result;
-                            CalcState <= waiting;
                             dout <= fp_sub_result;
                             if (inner_interval = '1') then
                                 CalcState <= acosinus6;
                             else
                                 fp_sub_start <= '1';
+                                CalcState <= waiting;
                             end if;
                         end if;
                     when waiting =>
+                        dout <= fp_sub_result;
                         if (fp_sub_rdy = '1') then
-                            dout <= fp_sub_result;
                             CalcState <= acosinus6;
                         end if;
                     when acosinus6 =>
@@ -319,15 +314,15 @@ begin
                         fp_mul_start <= '1';
                         CalcState <= acosinus7;
                     when acosinus7 =>
+                        fp_sub_opa <= pi_div_2;
+                        fp_sub_opb <= fp_mul_result;
                         if (fp_mul_rdy = '1') then
-                            fp_sub_opa <= pi_div_2;
-                            fp_sub_opb <= fp_mul_result;
                             fp_sub_start <= '1';
                             CalcState <= acosinus8;
                         end if;
                     when acosinus8 =>
+                        dout <= fp_sub_result;
                         if (fp_sub_rdy = '1') then
-                            dout <= fp_sub_result;
                             fp_out_req <= '1';
                             CalcState <= sync;
                         end if;

@@ -143,20 +143,6 @@ begin
     out_req <= internal_output_req;
     internal_output_ack <= out_ack;
 
-    -- get quadrant
-    process(dout)
-    begin
-        if (unsigned(dout(DATA_WIDTH-2 downto 0)) > unsigned(three(DATA_WIDTH-2 downto 0))) then -- greater 3
-            quadrant <= "11";
-        elsif (unsigned(dout(DATA_WIDTH-2 downto 0)) > unsigned(two(DATA_WIDTH-2 downto 0))) then -- greater 2
-            quadrant <= "10";
-        elsif (unsigned(dout(DATA_WIDTH-2 downto 0)) > unsigned(one(DATA_WIDTH-2 downto 0))) then -- greater 1
-            quadrant <= "01";
-        else
-            quadrant <= "00";
-        end if;
-    end process;
-
     -- sine from cosine calculation
     process(clk)
     begin
@@ -190,48 +176,57 @@ begin
                             CalcState <= sin2cosine;
                         end if;
                     when sin2cosine =>
+                        fp_sub_opa <= fp_mul_result;
+                        fp_sub_opb <= one;
                         if (fp_mul_rdy = '1') then
                             -- calculate x*2/pi - 1
-                            fp_sub_opa <= fp_mul_result;
-                            fp_sub_opb <= one;
                             fp_sub_start <= '1';
                             CalcState <= normalize;
                         end if;
                     when normalize =>
+                        fp_div_opa <= "0" & fp_sub_result(DATA_WIDTH-2 downto 0); -- abs value
+                        fp_div_opb <= four; -- 4.0
+                        dout <= "0" & fp_sub_result(DATA_WIDTH-2 downto 0); -- store abs value (needed in normalize 5)
                         if (fp_sub_rdy = '1') then
                             -- start second calc (z/4)
-                            fp_div_opa <= "0" & fp_sub_result(DATA_WIDTH-2 downto 0); -- abs value
-                            fp_div_opb <= four; -- 4.0
                             fp_div_start <= '1';
-                            dout <= "0" & fp_sub_result(DATA_WIDTH-2 downto 0); -- store abs value (needed in normalize 5)
                             CalcState <= normalize1;
                         end if;
                     when normalize1 =>
+                        fp_trunc_op <= fp_div_result;
                         if (fp_div_rdy = '1') then
                             --start third calc (trunc(z/4))
-                            fp_trunc_op <= fp_div_result;
                             fp_trunc_start <= '1';
                             CalcState <= normalize2;
                         end if;
                     when normalize2 =>
+                        fp_mul_opa <= fp_trunc_result;
+                        fp_mul_opb <= four; -- 4.0
                         if (fp_trunc_rdy = '1') then
                             --start fourth calc (4 * trunc(z/4))
-                            fp_mul_opa <= fp_trunc_result;
-                            fp_mul_opb <= four; -- 4.0
                             fp_mul_start <= '1';
                             CalcState <= normalize3;
                         end if;
                     when normalize3 =>
+                        fp_sub_opa <= dout;
+                        fp_sub_opb <= fp_mul_result;
                         if (fp_mul_rdy = '1') then
                             --start fifth calc (z - 4 * trunc(z/4))
-                            fp_sub_opa <= dout;
-                            fp_sub_opb <= fp_mul_result;
                             fp_sub_start <= '1';
                             CalcState <= normalize4;
                         end if;
                     when normalize4 =>
+                        if (unsigned(fp_sub_result(DATA_WIDTH-2 downto 0)) > unsigned(three(DATA_WIDTH-2 downto 0))) then -- greater 3
+                            quadrant <= "11";
+                        elsif (unsigned(fp_sub_result(DATA_WIDTH-2 downto 0)) > unsigned(two(DATA_WIDTH-2 downto 0))) then -- greater 2
+                            quadrant <= "10";
+                        elsif (unsigned(fp_sub_result(DATA_WIDTH-2 downto 0)) > unsigned(one(DATA_WIDTH-2 downto 0))) then -- greater 1
+                            quadrant <= "01";
+                        else
+                            quadrant <= "00";
+                        end if;
+                        dout <= fp_sub_result; -- store normalized value
                         if (fp_sub_rdy = '1') then
-                            dout <= fp_sub_result; -- store normalized value (now quadrant calc starts)
                             CalcState <= normalize5;
                         end if;
                     when normalize5 =>
@@ -253,8 +248,8 @@ begin
                             CalcState <= cosine; -- assumes the correct value in fp_trunc_op
                         end if;
                     when normalize6 =>
+                        fp_trunc_op <= fp_sub_result;
                         if (fp_sub_rdy = '1') then
-                            fp_trunc_op <= fp_sub_result;
                             CalcState <= cosine; -- assumes the correct value in fp_trunc_op
                         end if;
 
@@ -266,50 +261,51 @@ begin
                         CalcState <= cosine1;
 
                     when cosine1 =>
+                        fp_trunc_op <= fp_mul_result; -- store z^2
+                        fp_mul_opa <= cos_param2;
+                        fp_mul_opb <= fp_mul_result;
                         if (fp_mul_rdy = '1') then
-                            fp_trunc_op <= fp_mul_result; -- store z^2
                             -- calculate cos_param2 * z^2
-                            fp_mul_opa <= cos_param2;
-                            fp_mul_opb <= fp_mul_result;
                             fp_mul_start <= '1';
                             CalcState <= cosine2;
                         end if;
                     when cosine2 =>
+                        fp_sub_opa <= cos_param1;
+                        fp_sub_opb <= fp_mul_result;
                         if (fp_mul_rdy = '1') then
                             -- calculate cos_param1 - cos_param2*z^2
-                            fp_sub_opa <= cos_param1;
-                            fp_sub_opb <= fp_mul_result;
                             fp_sub_start <= '1';
                             CalcState <= cosine3;
                         end if;
                     when cosine3 =>
+                        fp_mul_opa <= fp_trunc_op;
+                        fp_mul_opb <= fp_sub_result;
                         if (fp_sub_rdy = '1') then
                             -- calculate z^2*(cos_param1 - cos_param2*z^2)
-                            fp_mul_opa <= fp_trunc_op;
-                            fp_mul_opb <= fp_sub_result;
                             fp_mul_start <= '1';
                             CalcState <= cosine4;
                         end if;
                     when cosine4 =>
+                        fp_sub_opa <= one;
+                        fp_sub_opb <= fp_mul_result;
                         if (fp_mul_rdy = '1') then
                             -- calculate 1 - z^2(cos_param1 - cos_param2*z^2)
-                            fp_sub_opa <= one;
-                            fp_sub_opb <= fp_mul_result;
                             fp_sub_start <= '1';
                             CalcState <= cosine5;
                         end if;
                     when cosine5 =>
+                        fp_trunc_op <= fp_sub_result;
                         if (fp_sub_rdy = '1') then
-                            fp_trunc_op <= fp_sub_result;
                             CalcState <= fixsign;
                         end if;
                     when fixsign =>
+                        dout(DATA_WIDTH-2 downto 0) <= fp_trunc_op(DATA_WIDTH-2 downto 0);
                         fp_out_req <= '1';
                         CalcState <= sync;
                         if (quadrant = 1 or quadrant = 2) then
-                            dout <= "1"&fp_trunc_op(DATA_WIDTH-2 downto 0);
+                            dout(DATA_WIDTH-1) <= '1';
                         else
-                            dout <= "0"&fp_trunc_op(DATA_WIDTH-2 downto 0);
+                            dout(DATA_WIDTH-1) <= '0';
                         end if;
                     when sync =>
                         fp_out_req <= '1';
