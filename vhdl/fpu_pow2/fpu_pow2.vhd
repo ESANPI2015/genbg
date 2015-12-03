@@ -44,14 +44,12 @@ type t_state is (
                 );
 signal s_state : t_state := idle;
 
---constant sqrt_2 : std_logic_vector(FP_WIDTH-1 downto 0) := x"3fb504f3"; -- 1.414214f
 constant one : std_logic_vector(FP_WIDTH-1 downto 0) := x"3f800000";
 signal s_opa_i : std_logic_vector(FP_WIDTH-1 downto 0);
 signal exponent : signed(EXP_WIDTH-1 downto 0);
 signal pre_shift : std_logic_vector(FP_WIDTH-2 downto 0);
 signal post_shift : std_logic_vector(FP_WIDTH-2 downto 0);
 signal new_exponent : signed(EXP_WIDTH-1 downto 0);
---signal powm : std_logic_vector(FP_WIDTH-1 downto 0);
 signal bit_cnt : integer range 1 to FP_WIDTH-EXP_WIDTH-2;
 signal lut_addr : integer range 1 to FP_WIDTH-EXP_WIDTH-2;
 signal s_inf_o, s_nan_o : std_logic;
@@ -183,7 +181,16 @@ begin
                 if (bit_cnt = 1) then
                     -- we are finished
                     ready_o <= '1';
-                    output_o <= fp_mul_opa;
+                    -- Handle extreme cases
+                    if (s_nan_o = '1') then -- NaN
+                        output_o <= s_opa_i(FP_WIDTH-1) & SNAN;
+                    elsif (s_inf_o = '1' and s_opa_i(FP_WIDTH-1) = '1') then -- -INF
+                        output_o <= "0" & ZERO_VECTOR;
+                    elsif (s_inf_o = '1' and s_opa_i(FP_WIDTH-1) = '0') then -- +INF
+                        output_o <= "0" & INF;
+                    else
+                        output_o <= fp_mul_opa;
+                    end if;
                     s_state <= idle;
                 else
                     if (post_shift(bit_cnt) = '1') then
@@ -208,7 +215,7 @@ begin
 end process;
 
 -- Generate Exceptions 
-s_inf_o <= '1' when s_opa_i(30 downto 23)="11111111" and s_nan_o='0' else '0';
-s_nan_o <= '1' when s_opa_i(30 downto 0)=SNAN or s_opa_i(30 downto 0)=QNAN else '0';
+s_inf_o <= '1' when s_opa_i(FP_WIDTH-2 downto FP_WIDTH-EXP_WIDTH-1)="11111111" and s_nan_o='0' else '0';
+s_nan_o <= '1' when s_opa_i(FP_WIDTH-2 downto FP_WIDTH-EXP_WIDTH-1)="11111111" and or_reduce(s_opa_i(FP_WIDTH-EXP_WIDTH-2 downto 0))='1' else '0';
 
 end rtl;

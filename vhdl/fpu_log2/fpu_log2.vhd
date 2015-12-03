@@ -44,7 +44,6 @@ type t_state is (
                 );
 signal s_state : t_state := idle;
 
---constant sqrt_2 : std_logic_vector(FP_WIDTH-1 downto 0) := x"3fb504f3"; -- 1.414214f
 constant one : std_logic_vector(FP_WIDTH-1 downto 0) := x"3f800000";
 signal s_opa_i : std_logic_vector(FP_WIDTH-1 downto 0);
 signal exponent : signed(EXP_WIDTH-1 downto 0);
@@ -52,10 +51,9 @@ signal exponent_std : std_logic_vector(EXP_WIDTH-1 downto 0);
 signal leading_zeros : std_logic_vector(5 downto 0);
 signal nlz : natural range 0 to 8;
 signal new_exponent : signed(EXP_WIDTH-1 downto 0);
---signal logm : std_logic_vector(FP_WIDTH-1 downto 0);
 signal bit_cnt : integer range 1 to FP_WIDTH-EXP_WIDTH-2;
 signal lut_addr : integer range 1 to FP_WIDTH-EXP_WIDTH-2;
-signal s_inf_o, s_nan_o : std_logic;
+signal s_inf_o, s_nan_o, s_zero_o : std_logic;
 
 signal fp_mul_opa : std_logic_vector(FP_WIDTH-1 downto 0);
 signal fp_mul_opb : std_logic_vector(FP_WIDTH-1 downto 0);
@@ -171,12 +169,6 @@ begin
         fp_mul_opb <= sqrt_value_inv;
         -- pseudo defaults
         s_state <= s_state;
-        --bit_cnt <= bit_cnt;
-        --lut_addr <= lut_addr;
-        --exponent <= exponent;
-        --nlz <= nlz;
-        --fp_add_opa <= fp_add_opa;
-        --fp_mul_opa <= fp_mul_opb;
         case s_state is
             when idle =>
                 bit_cnt <= FP_WIDTH-EXP_WIDTH-2;
@@ -221,7 +213,18 @@ begin
                 if (bit_cnt = 1) then
                     -- we are finished
                     ready_o <= '1';
-                    output_o <= fp_add_opa;
+                    -- Handle extreme cases
+                    if (s_nan_o = '1') then -- NaN
+                        output_o <= s_opa_i(FP_WIDTH-1) & QNAN;
+                    elsif (s_opa_i(FP_WIDTH-1) = '1') then -- < 0
+                        output_o <= "1" & SNAN;
+                    elsif (s_zero_o = '1') then -- ==0
+                        output_o <= "1" & INF;
+                    elsif (s_inf_o = '1' and s_opa_i(FP_WIDTH-1) = '0') then -- +INF
+                        output_o <= "0" & INF;
+                    else
+                        output_o <= fp_add_opa;
+                    end if;
                     s_state <= idle;
                 else
                     if (unsigned(fp_mul_opa(FP_WIDTH-2 downto 0)) >= unsigned(sqrt_value(FP_WIDTH-2 downto 0))) then
@@ -250,7 +253,8 @@ begin
 end process;
 
 -- Generate Exceptions 
-s_inf_o <= '1' when s_opa_i(30 downto 23)="11111111" and s_nan_o='0' else '0';
-s_nan_o <= '1' when s_opa_i(30 downto 0)=SNAN or s_opa_i(30 downto 0)=QNAN else '0';
+s_inf_o <= '1' when s_opa_i(FP_WIDTH-2 downto FP_WIDTH-EXP_WIDTH-1)="11111111" and s_nan_o='0' else '0';
+s_nan_o <= '1' when s_opa_i(FP_WIDTH-2 downto FP_WIDTH-EXP_WIDTH-1)="11111111" and or_reduce(s_opa_i(FP_WIDTH-EXP_WIDTH-2 downto 0))='1' else '0';
+s_zero_o <= '1' when or_reduce(s_opa_i(FP_WIDTH-2 downto 0)) = '0' else '0';
 
 end rtl;
