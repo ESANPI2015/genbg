@@ -316,6 +316,18 @@ bg_error bg_node_generate(bg_generator_t *g, bg_node_t *n, const unsigned int lv
         case bg_NODE_TYPE_ACOS:
             code(g,"\tresult = acosf(merge[0]);");
             break;
+        case bg_NODE_TYPE_ASIN:
+            code(g,"\tresult = asinf(merge[0]);");
+            break;
+        case bg_NODE_TYPE_ATAN:
+            code(g,"\tresult = atanf(merge[0]);");
+            break;
+        case bg_NODE_TYPE_LOG:
+            code(g,"\tresult = logf(merge[0]);");
+            break;
+        case bg_NODE_TYPE_EXP:
+            code(g,"\tresult = expf(merge[0]);");
+            break;
         case bg_NODE_TYPE_ATAN2:
             code(g,"\tresult = atan2f(merge[0], merge[1]);");
             break;
