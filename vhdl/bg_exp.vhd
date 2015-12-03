@@ -89,7 +89,6 @@ begin
             if rst = '1' then
                 fp_in_req <= '0';
                 fp_opa <= (others => '0');
-                fp_opb <= (others => '0');
                 internal_input_ack <= '0';
                 InputState <= idle;
             else
