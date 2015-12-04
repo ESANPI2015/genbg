@@ -21,6 +21,8 @@ entity fpu_pow2 is
 
         -- Input Operand
         opa_i        	: in std_logic_vector(FP_WIDTH-1 downto 0);  -- Default: FP_WIDTH=32 
+        -- prescaling
+        prescale        : in std_logic_vector(FP_WIDTH-1 downto 0) := x"3f800000";
         
         -- Output port   
         output_o        : out std_logic_vector(FP_WIDTH-1 downto 0);
@@ -36,6 +38,7 @@ architecture rtl of fpu_pow2 is
 type lookup_t is array(FP_WIDTH-EXP_WIDTH-2 downto 1) of std_logic_vector(FP_WIDTH-1 downto 0);
 type t_state is (
                 idle,
+                prescaling,
                 compute,
                 compute1,
                 compute2,
@@ -144,15 +147,21 @@ begin
 	if rising_edge(clk_i) then
         ready_o <= '0';
         fp_mul_start <= '0';
-        fp_mul_opb <= sqrt_value;
         s_state <= s_state;
         case s_state is
             when idle =>
                 bit_cnt <= FP_WIDTH-EXP_WIDTH-2;
+                fp_mul_opa <= opa_i;
+                fp_mul_opb <= prescale;
                 if start_i ='1' then
-                    s_opa_i <= opa_i;
-                    pre_shift <= ZERO_VECTOR(FP_WIDTH-2 downto FP_WIDTH-EXP_WIDTH) & "1" & opa_i(FP_WIDTH-EXP_WIDTH-2 downto 0);
-                    exponent <= signed(opa_i(FP_WIDTH-2 downto FP_WIDTH-EXP_WIDTH-1)) - 127;
+                    fp_mul_start <= '1';
+                    s_state <= prescaling;
+                end if;
+            when prescaling =>
+                s_opa_i <= fp_mul_result;
+                pre_shift <= ZERO_VECTOR(FP_WIDTH-2 downto FP_WIDTH-EXP_WIDTH) & "1" & fp_mul_result(FP_WIDTH-EXP_WIDTH-2 downto 0);
+                exponent <= signed(fp_mul_result(FP_WIDTH-2 downto FP_WIDTH-EXP_WIDTH-1)) - 127;
+                if (fp_mul_rdy = '1') then
                     s_state <= compute;
                 end if;
             when compute =>
@@ -177,6 +186,7 @@ begin
                 lut_addr <= lut_addr - 1;
                 s_state <= compute3;
             when compute3 =>
+                fp_mul_opb <= sqrt_value;
                 bit_cnt <= bit_cnt - 1;
                 if (bit_cnt = 1) then
                     -- we are finished

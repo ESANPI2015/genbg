@@ -21,6 +21,8 @@ entity fpu_log2 is
 
         -- Input Operand
         opa_i        	: in std_logic_vector(FP_WIDTH-1 downto 0);  -- Default: FP_WIDTH=32 
+        -- postscaling
+        postscale       : in std_logic_vector(FP_WIDTH-1 downto 0) := x"3f800000";
         
         -- Output port   
         output_o        : out std_logic_vector(FP_WIDTH-1 downto 0);
@@ -40,7 +42,8 @@ type t_state is (
                 compute1,
                 compute2,
                 compute3,
-                compute4
+                compute4,
+                postscaling
                 );
 signal s_state : t_state := idle;
 
@@ -166,7 +169,6 @@ begin
         fp_add_start <= '0';
         new_exponent <= (others => '0');
         fp_add_opb <= (others => '0');
-        fp_mul_opb <= sqrt_value_inv;
         -- pseudo defaults
         s_state <= s_state;
         case s_state is
@@ -210,22 +212,13 @@ begin
             when compute3 =>
                 bit_cnt <= bit_cnt - 1;
                 fp_add_opb(FP_WIDTH-2 downto FP_WIDTH-EXP_WIDTH-1) <= std_logic_vector(to_signed(bit_cnt - (FP_WIDTH-EXP_WIDTH-1), 8)+127);
+                fp_mul_opb <= sqrt_value_inv;
                 if (bit_cnt = 1) then
-                    -- we are finished
-                    ready_o <= '1';
-                    -- Handle extreme cases
-                    if (s_nan_o = '1') then -- NaN
-                        output_o <= s_opa_i(FP_WIDTH-1) & QNAN;
-                    elsif (s_opa_i(FP_WIDTH-1) = '1') then -- < 0
-                        output_o <= "1" & SNAN;
-                    elsif (s_zero_o = '1') then -- ==0
-                        output_o <= "1" & INF;
-                    elsif (s_inf_o = '1' and s_opa_i(FP_WIDTH-1) = '0') then -- +INF
-                        output_o <= "0" & INF;
-                    else
-                        output_o <= fp_add_opa;
-                    end if;
-                    s_state <= idle;
+                    -- postscaling
+                    fp_mul_opa <= fp_add_opa;
+                    fp_mul_opb <= postscale;
+                    fp_mul_start <= '1';
+                    s_state <= postscaling;
                 else
                     if (unsigned(fp_mul_opa(FP_WIDTH-2 downto 0)) >= unsigned(sqrt_value(FP_WIDTH-2 downto 0))) then
                         -- start mul
@@ -247,6 +240,24 @@ begin
                     -- prefetch
                     lut_addr <= lut_addr - 1;
                     s_state <= compute3;
+                end if;
+            when postscaling =>
+                if (fp_mul_rdy <= '1') then
+                    -- we are finished
+                    ready_o <= '1';
+                    -- Handle extreme cases
+                    if (s_nan_o = '1') then -- NaN
+                        output_o <= s_opa_i(FP_WIDTH-1) & QNAN;
+                    elsif (s_opa_i(FP_WIDTH-1) = '1') then -- < 0
+                        output_o <= "1" & SNAN;
+                    elsif (s_zero_o = '1') then -- ==0
+                        output_o <= "1" & INF;
+                    elsif (s_inf_o = '1' and s_opa_i(FP_WIDTH-1) = '0') then -- +INF
+                        output_o <= "0" & INF;
+                    else
+                        output_o <= fp_mul_result;
+                    end if;
+                    s_state <= idle;
                 end if;
         end case;
 	end if;	
