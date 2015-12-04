@@ -26,9 +26,11 @@ end bg_inverse;
 architecture Behavioral of bg_inverse is
     -- Add types here
     type InputStates is (idle, waiting, pushing);
-    type OutputStates is (idle, waiting, pushing, sync);
+    type ComputeStates is (idle, computing, pushing);
+    type OutputStates is (idle, pushing, sync);
     -- Add signals here
     signal InputState : InputStates;
+    signal ComputeState : ComputeStates;
     signal OutputState : OutputStates;
 
     signal internal_input_req : std_logic;
@@ -38,12 +40,14 @@ architecture Behavioral of bg_inverse is
 
     -- FP stuff
     signal fp_opb : std_logic_vector(DATA_WIDTH-1 downto 0);
-    signal fp_in_req : std_logic;
-    signal fp_in_ack : std_logic;
     signal fp_result : std_logic_vector(DATA_WIDTH-1 downto 0);
     signal fp_start : std_logic;
     signal fp_rdy : std_logic;
 
+    signal fp_in_req : std_logic;
+    signal fp_in_ack : std_logic;
+    signal fp_out_req : std_logic;
+    signal fp_out_ack : std_logic;
 begin
     internal_input_req <= in_req;
     in_ack <= internal_input_ack;
@@ -98,30 +102,59 @@ begin
         end if;
     end process InputProcess;
 
-    OutputProcess : process(clk)
+    ComputeProcess : process(clk)
     begin
         if rising_edge(clk) then
             if rst = '1' then
+                fp_out_req <= '0';
                 fp_in_ack <= '0';
                 fp_start <= '0';
-                internal_output_req <= '0';
-                out_port <= (others => '0');
-                OutputState <= idle;
+                ComputeState <= idle;
             else
+                fp_out_req <= '0';
                 fp_in_ack <= '0';
                 fp_start <= '0';
-                internal_output_req <= '0';
-                OutputState <= OutputState;
-                case OutputState is
+                ComputeState <= ComputeState;
+                case ComputeState is
                     when idle =>
                         if (fp_in_req = '1') then
                             fp_in_ack <= '1';
                             fp_start <= '1';
-                            OutputState <= waiting;
+                            ComputeState <= computing;
                         end if;
-                    when waiting =>
-                        out_port <= fp_result;
+                    when computing =>
                         if (fp_rdy = '1') then
+                            fp_out_req <= '1';
+                            ComputeState <= pushing;
+                        end if;
+                    when pushing =>
+                        fp_out_req <= '1';
+                        if (fp_out_ack = '1') then
+                            fp_out_req <= '0';
+                            ComputeState <= idle;
+                        end if;
+                end case;
+            end if;
+        end if;
+    end process ComputeProcess;
+
+    OutputProcess : process(clk)
+    begin
+        if rising_edge(clk) then
+            if rst = '1' then
+                fp_out_ack <= '0';
+                internal_output_req <= '0';
+                out_port <= (others => '0');
+                OutputState <= idle;
+            else
+                fp_out_ack <= '0';
+                internal_output_req <= '0';
+                OutputState <= OutputState;
+                case OutputState is
+                    when idle =>
+                        if (fp_out_req = '1') then
+                            fp_out_ack <= '1';
+                            out_port <= fp_result;
                             OutputState <= pushing;
                         end if;
                     when pushing =>
