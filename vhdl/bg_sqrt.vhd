@@ -27,7 +27,7 @@ architecture Behavioral of bg_sqrt is
     -- Add types here
     type InputStates is (idle, waiting, pushing);
     type ComputeStates is (idle, computing, pushing);
-    type OutputStates is (idle, waiting, pushing, sync);
+    type OutputStates is (idle, pushing, sync);
     -- Add signals here
     signal InputState : InputStates;
     signal ComputeState : ComputeStates;

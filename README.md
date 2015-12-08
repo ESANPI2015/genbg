@@ -23,7 +23,18 @@ DONE:
   - bg2dict_c generates a dictionary from behaviour graph spec (C language)
   - dict2src is a template engine using a dictionary and a template to generate src/header files
   - Templates: 
-     * include/bg_generate_header_template.h
-     * src/bg_generate_source_template.c
+     * templates/bg_generate_header_template.h
+     * templates/bg_generate_source_template.c
 
 * The generated files are a standalone version of a behaviour graph
+
+* There is a behaviour graph to VHDL generator
+  - bg2dict_vhdl generates a dictionary from behavior graph spec into synthesizable VHDL
+  - dict2src can be used as well to convert templates to a graph_config and graph entity file
+  - Templates:
+     * templates/bg_graph_config_template.vhd
+     * templates/bg_graph_template.vhd
+
+* For BG generation this is all that is needed.
+  However, to be usable there has to be some toplevel template and glue code to let different BGs communicate.
+  Furthermore, a big BG should be partionioned and distributed according to a HW architecture spec.

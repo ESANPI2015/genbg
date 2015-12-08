@@ -8,7 +8,7 @@ nodes:
     type: 'INPUT'
     id: 200
   - type: 'SUBGRAPH'
-    subgraph_name: 'graphs/simpleTest.yml'
+    subgraph_name: 'simpleTest.yml'
     id: 400
     inputs:
       - {idx: 0, bias: 0, default: 0.0, type: 'SUM'}
