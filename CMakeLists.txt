@@ -11,8 +11,8 @@ include_directories(include)
 
 # This is not possible without mars cmake file :/ So we have to compile this on our own
 if(NOT TARGET c_bagel)
-    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../ext/bagle/learning/bagel/c_bagel c_bagel)
-    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../ext/bagle/learning/bagel/c_bagel/src)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../ext/c_bagel c_bagel)
+    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../ext/c_bagel/src)
 endif(NOT TARGET c_bagel)
 
 SET(ENV{PKG_CONFIG_PATH}
@@ -43,7 +43,6 @@ set(HEADERS
     include/bg_generate_c.h
     include/template_engine.h
     include/float_to_std.h
-    include/bg_transformation.h
     )
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/")
@@ -72,18 +71,8 @@ add_executable(dict2src
     src/template_engine.c
     src/generateFromTemplate.c
     )
-add_executable(clusterbg
-    src/bg_transformation.c
-    src/clusterBG.c
-    )
-target_link_libraries(clusterbg
-    ${genBG_PKGCONFIG_STATIC_LIBRARIES}
-    )
 
 # creating a convenience target, so a user can easily execute ileggui, without cd'ing into the builddir
-add_custom_target(clusterbg-lazy-symlink ALL
-    ln --force -s ${CMAKE_CURRENT_BINARY_DIR}/clusterbg ${CMAKE_SOURCE_DIR}/clusterbg
-    DEPENDS clusterbg)
 add_custom_target(bg2dict_c-lazy-symlink ALL
     ln --force -s ${CMAKE_CURRENT_BINARY_DIR}/bg2dict_c ${CMAKE_SOURCE_DIR}/bg2dict_c
     DEPENDS bg2dict_c)
@@ -94,8 +83,6 @@ add_custom_target(dict2src-lazy-symlink ALL
     ln --force -s ${CMAKE_CURRENT_BINARY_DIR}/dict2src ${CMAKE_SOURCE_DIR}/dict2src
     DEPENDS dict2src)
 # and clean this up if someone asks us to do so
-set_directory_properties(PROPERTIES
-    ADDITIONAL_MAKE_CLEAN_FILES "${CMAKE_SOURCE_DIR}/clusterbg")
 set_directory_properties(PROPERTIES
     ADDITIONAL_MAKE_CLEAN_FILES "${CMAKE_SOURCE_DIR}/bg2dict_c")
 set_directory_properties(PROPERTIES
