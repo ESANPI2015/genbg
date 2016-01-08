@@ -8,7 +8,7 @@
 #include "template_engine.h"
 
 /*This function generates dictionary entries for each code line*/
-static void code(bg_generator_t *g, const char* src)
+static void code(bg_generator_c_t *g, const char* src)
 {
     dictEntry entry;
 
@@ -19,7 +19,7 @@ static void code(bg_generator_t *g, const char* src)
 }
 
 /*This function generated a dictionary entry for each weight*/
-static void weight(bg_generator_t *g, const int index, const float value, const int final)
+static void weight(bg_generator_c_t *g, const int index, const float value, const int final)
 {
     dictEntry entry;
 
@@ -31,7 +31,7 @@ static void weight(bg_generator_t *g, const int index, const float value, const 
     writeDictionary(g->out, &entry);
 }
 
-bg_error bg_merge_generate (bg_generator_t *g, struct input_port_t *input_port, const int id, const unsigned int lvl)
+static bg_error bg_merge_generate (bg_generator_c_t *g, struct input_port_t *input_port, const int id, const unsigned int lvl)
 {
     bg_error err = bg_SUCCESS;
     bg_list_iterator_t it;
@@ -252,7 +252,7 @@ bg_error bg_merge_generate (bg_generator_t *g, struct input_port_t *input_port, 
     return err;
 }
 
-bg_error bg_node_generate(bg_generator_t *g, bg_node_t *n, const unsigned int lvl)
+static bg_error bg_node_generate(bg_generator_c_t *g, bg_node_t *n, const unsigned int lvl)
 {
     bg_error err = bg_SUCCESS;
     bg_list_iterator_t it;
@@ -357,7 +357,7 @@ bg_error bg_node_generate(bg_generator_t *g, bg_node_t *n, const unsigned int lv
             break;
         case bg_NODE_TYPE_SUBGRAPH:
             code(g,"\t/*** SUBGRAPH START ***/");
-            err = bg_graph_generate(g, ((subgraph_data_t*)n->_priv_data)->subgraph, lvl+1);
+            err = bg_graph_generate_c(g, ((subgraph_data_t*)n->_priv_data)->subgraph, lvl+1);
             code(g,"\t/*** SUBGRAPH END ***/");
             break;
         case bg_NODE_TYPE_FSIGMOID:
@@ -395,7 +395,7 @@ bg_error bg_node_generate(bg_generator_t *g, bg_node_t *n, const unsigned int lv
     return err;
 }
 
-bg_error bg_graph_generate(bg_generator_t *g, bg_graph_t *graph, const unsigned int lvl)
+bg_error bg_graph_generate_c(bg_generator_c_t *g, bg_graph_t *graph, const unsigned int lvl)
 {
     bg_error err = bg_SUCCESS;
     bg_node_t *current_node;
@@ -426,7 +426,7 @@ bg_error bg_graph_generate(bg_generator_t *g, bg_graph_t *graph, const unsigned 
     return err;
 }
 
-bg_error bg_generator_init(bg_generator_t *generator, FILE *fp, const char *name)
+bg_error bg_generator_c_init(bg_generator_c_t *generator, FILE *fp, const char *name)
 {
     dictEntry entry;
 
@@ -445,7 +445,7 @@ bg_error bg_generator_init(bg_generator_t *generator, FILE *fp, const char *name
     return bg_SUCCESS;
 }
 
-bg_error bg_generator_finalize(bg_generator_t *generator)
+bg_error bg_generator_c_finalize(bg_generator_c_t *generator)
 {
     bg_edge_t *edge = NULL;
     bg_list_iterator_t it;

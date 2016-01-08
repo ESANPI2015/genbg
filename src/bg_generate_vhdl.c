@@ -11,7 +11,7 @@
 #include "float_to_std.h"
 
 /*This function generates dictionary entries for a connection between an output of a component and an input of an component*/
-static void addConnection(bg_generator_t *g, const char* from, const unsigned int fidx, const int foutput, const char *to, const unsigned int tidx, const int tinput)
+static void addConnection(bg_generator_vhdl_t *g, const char* from, const unsigned int fidx, const int foutput, const char *to, const unsigned int tidx, const int tinput)
 {
     dictEntry entry;
     char temp[TEMPLATE_ENGINE_MAX_STRING_LENGTH];
@@ -55,7 +55,7 @@ static void addConnection(bg_generator_t *g, const char* from, const unsigned in
     g->connections++;
 }
 
-static void addSingleConnection(bg_generator_t *g, const char* from, const unsigned int fidx, const int foutput, const char *to, const unsigned int tidx, const int tinput)
+static void addSingleConnection(bg_generator_vhdl_t *g, const char* from, const unsigned int fidx, const int foutput, const char *to, const unsigned int tidx, const int tinput)
 {
     dictEntry entry;
     char temp[TEMPLATE_ENGINE_MAX_STRING_LENGTH];
@@ -76,7 +76,7 @@ static void addSingleConnection(bg_generator_t *g, const char* from, const unsig
     g->connections++;
 }
 
-static unsigned int addEdge(bg_generator_t *g, const float weight, const unsigned int isBackedge)
+static unsigned int addEdge(bg_generator_vhdl_t *g, const float weight, const unsigned int isBackedge)
 {
     dictEntry entry;
     char temp[TEMPLATE_ENGINE_MAX_STRING_LENGTH];
@@ -110,7 +110,7 @@ static unsigned int addEdge(bg_generator_t *g, const float weight, const unsigne
     return g->edges++;
 }
 
-static unsigned int addSource(bg_generator_t *g, const float value)
+static unsigned int addSource(bg_generator_vhdl_t *g, const float value)
 {
     dictEntry entry;
     char temp[TEMPLATE_ENGINE_MAX_STRING_LENGTH];
@@ -122,12 +122,12 @@ static unsigned int addSource(bg_generator_t *g, const float value)
     return g->sources++;
 }
 
-static unsigned int addSink(bg_generator_t *g)
+static unsigned int addSink(bg_generator_vhdl_t *g)
 {
     return g->sinks++;
 }
 
-static int addMerge(bg_generator_t *g, const bg_merge_type type, const unsigned int inputs, const float bias, const float defValue)
+static int addMerge(bg_generator_vhdl_t *g, const bg_merge_type type, const unsigned int inputs, const float bias, const float defValue)
 {
     int id = -1;
     dictEntry entry;
@@ -243,7 +243,7 @@ static int addMerge(bg_generator_t *g, const bg_merge_type type, const unsigned 
     return g->merges++;
 }
 
-static unsigned int addCopy(bg_generator_t *g, const unsigned int outputs)
+static unsigned int addCopy(bg_generator_vhdl_t *g, const unsigned int outputs)
 {
     dictEntry entry;
     char temp[TEMPLATE_ENGINE_MAX_STRING_LENGTH];
@@ -260,7 +260,7 @@ static unsigned int addCopy(bg_generator_t *g, const unsigned int outputs)
     return g->copies++;
 }
 
-bg_error bg_node_generate(bg_generator_t *g, bg_node_t *n, const unsigned int lvl)
+static bg_error bg_node_generate(bg_generator_vhdl_t *g, bg_node_t *n, const unsigned int lvl)
 {
     dictEntry entry;
     bg_error err = bg_SUCCESS;
@@ -436,7 +436,7 @@ bg_error bg_node_generate(bg_generator_t *g, bg_node_t *n, const unsigned int lv
             sprintf(nodeType, "ternary");
             break;
         case bg_NODE_TYPE_SUBGRAPH:
-            err = bg_graph_generate(g, ((subgraph_data_t*)n->_priv_data)->subgraph, lvl+1);
+            err = bg_graph_generate_vhdl(g, ((subgraph_data_t*)n->_priv_data)->subgraph, lvl+1);
             break;
         case bg_NODE_TYPE_TANH:
         case bg_NODE_TYPE_FSIGMOID:
@@ -514,7 +514,7 @@ bg_error bg_node_generate(bg_generator_t *g, bg_node_t *n, const unsigned int lv
     return err;
 }
 
-bg_error bg_graph_generate(bg_generator_t *g, bg_graph_t *graph, const unsigned int lvl)
+bg_error bg_graph_generate_vhdl(bg_generator_vhdl_t *g, bg_graph_t *graph, const unsigned int lvl)
 {
     bg_error err = bg_SUCCESS;
     bg_node_t *current_node;
@@ -543,7 +543,7 @@ bg_error bg_graph_generate(bg_generator_t *g, bg_graph_t *graph, const unsigned 
     return err;
 }
 
-bg_error bg_generator_init(bg_generator_t *generator, FILE *fp, const char *name)
+bg_error bg_generator_vhdl_init(bg_generator_vhdl_t *generator, FILE *fp, const char *name)
 {
     dictEntry entry;
 
@@ -575,7 +575,7 @@ bg_error bg_generator_init(bg_generator_t *generator, FILE *fp, const char *name
     return bg_SUCCESS;
 }
 
-bg_error bg_generator_finalize(bg_generator_t *generator)
+bg_error bg_generator_vhdl_finalize(bg_generator_vhdl_t *generator)
 {
     dictEntry entry;
     time_t curr;
