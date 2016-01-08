@@ -29,13 +29,10 @@ message(${genBG_PKGCONFIG_INCLUDE_DIRS})
 link_directories(${genBG_PKGCONFIG_LIBRARY_DIRS})
 add_definitions(${genBG_PKGCONFIG_CFLAGS_OTHER} -ggdb)
 
-set(SOURCES_C
+set(SOURCES
     src/bg_generate_c.c
     src/template_engine.c
-    )
-set(SOURCES_VHDL
     src/bg_generate_vhdl.c
-    src/template_engine.c
     src/float_to_std.c
     )
 set(HEADERS
@@ -48,44 +45,13 @@ set(HEADERS
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/")
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
-# at first we have a minimal cmdline app, which exports simply everything into plaintext files
-add_executable(bg2dict_c ${SOURCES_C}
-    src/generateBG.c
-    )
-add_executable(bg2dict_vhdl ${SOURCES_VHDL}
-    src/generateBG_vhdl.c
-    )
-target_link_libraries(bg2dict_c
-    ${genBG_PKGCONFIG_STATIC_LIBRARIES}
-    )
-target_link_libraries(bg2dict_vhdl
-    ${genBG_PKGCONFIG_STATIC_LIBRARIES}
-    )
-add_dependencies(bg2dict_c
-    c_bagel
-    )
-add_dependencies(bg2dict_vhdl
-    c_bagel
-    )
-add_executable(dict2src
-    src/template_engine.c
-    src/generateFromTemplate.c
+add_library(genBG STATIC ${SOURCES})
+target_link_libraries(genBG
+    ${genBG_PKGCONFIG_LIBRARIES}
     )
 
-# creating a convenience target, so a user can easily execute ileggui, without cd'ing into the builddir
-add_custom_target(bg2dict_c-lazy-symlink ALL
-    ln --force -s ${CMAKE_CURRENT_BINARY_DIR}/bg2dict_c ${CMAKE_SOURCE_DIR}/bg2dict_c
-    DEPENDS bg2dict_c)
-add_custom_target(bg2dict_vhdl-lazy-symlink ALL
-    ln --force -s ${CMAKE_CURRENT_BINARY_DIR}/bg2dict_vhdl ${CMAKE_SOURCE_DIR}/bg2dict_vhdl
-    DEPENDS bg2dict_vhdl)
-add_custom_target(dict2src-lazy-symlink ALL
-    ln --force -s ${CMAKE_CURRENT_BINARY_DIR}/dict2src ${CMAKE_SOURCE_DIR}/dict2src
-    DEPENDS dict2src)
-# and clean this up if someone asks us to do so
-set_directory_properties(PROPERTIES
-    ADDITIONAL_MAKE_CLEAN_FILES "${CMAKE_SOURCE_DIR}/bg2dict_c")
-set_directory_properties(PROPERTIES
-    ADDITIONAL_MAKE_CLEAN_FILES "${CMAKE_SOURCE_DIR}/bg2dict_vhdl")
-set_directory_properties(PROPERTIES
-    ADDITIONAL_MAKE_CLEAN_FILES "${CMAKE_SOURCE_DIR}/dict2src")
+# pkg-config, to be installed:
+configure_file(${PROJECT_NAME}.pc.in ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.pc @ONLY)
+install(FILES ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.pc DESTINATION lib/pkgconfig)
+# pkg-config for use inside our buildtree
+configure_file(${PROJECT_NAME}-uninstalled.pc.in ${CMAKE_BINARY_DIR}/${PROJECT_NAME}-uninstalled.pc @ONLY)
