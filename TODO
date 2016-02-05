@@ -93,9 +93,9 @@ TODO
   + Optimization of edges and merges
     * edges with weight 1.0f can be replaced by pipes
     * merges (e.g. sum with 1 input and bias 0) can be replaced by pipes
-  - Only SUM and PRODUCT merges atm.
+  - Only SUM and PRODUCT merges atm. FIXED
   + Added DIV and SQRT nodes
-  - No binary or ternary nodes yet
+  - No binary or ternary nodes yet FIXED
   + Back edge detection implemented and tested. But it should not use node ids. We should use a visited nodes list!
   NOTE: If you want dynamic weights or such you only need to write a new template :D
 
@@ -103,4 +103,4 @@ TODO
 * What would be nice is a bg_split and/or bg_merge functionality
   We could then do partitioning into N parts or such before generating with bg_generate
   (Or maybe something like bg_cluster)
-  ATTENTION: Not all nodes are good for FPGAs!!!
+  ATTENTION: Not all nodes are good for FPGAs!!! SEE OTHER LIB -> mapBG

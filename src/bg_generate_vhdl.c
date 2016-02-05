@@ -462,8 +462,7 @@ static bg_error bg_node_generate(bg_generator_vhdl_t *g, bg_node_t *n, const uns
     {
         if (n->input_ports[i]->num_edges > 0)
         {
-            for (j = 0; j < n->input_ports[i]->num_edges; ++j)
-                addConnection(g, "merge", mergeId[i], -1, nodeType, nodeId, i);
+            addConnection(g, "merge", mergeId[i], -1, nodeType, nodeId, i);
         } else {
             addConnection(g, "source", mergeId[i], -1, nodeType, nodeId, i);
         }
