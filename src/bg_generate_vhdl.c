@@ -519,16 +519,36 @@ bg_error bg_graph_generate_vhdl(bg_generator_vhdl_t *g, bg_graph_t *graph, const
     bg_node_t *current_node;
     bg_node_list_iterator_t it;
 
-    /*Call bg_graph_evaluate to determine evaluation order (ONLY AT TOPLEVEL)*/
-    if (lvl == 0)
+    /*INFO:
+     * Because of the lack of an explicit relationship between SUBGRAPH node ports and nested graph INPUT/OUTPUT nodes
+     * we have to generate input and output nodes in order of parsing (see bg_yaml_loader etc.)*/
+
+    /*At first cycle through all input nodes*/
+    for (current_node = bg_node_list_first(graph->input_nodes, &it);
+            current_node;
+            current_node = bg_node_list_next(&it))
     {
-        err = bg_graph_evaluate(graph);
-        if (err != bg_SUCCESS)
+        if ((err = bg_node_generate(g, current_node, lvl)) != bg_SUCCESS)
             return err;
+        /*After we have generated a node we append it to the list of visited nodes. NEEDED for back edge detection!*/
+        bg_list_append(g->visited_nodes, current_node);
+        g->nodes++;
     }
 
-    /*Cycle through all nodes and call bg_node_generate*/
-    for (current_node = bg_node_list_first(graph->evaluation_order, &it);
+    /*Then cycle through all hidden nodes*/
+    for (current_node = bg_node_list_first(graph->hidden_nodes, &it);
+            current_node;
+            current_node = bg_node_list_next(&it))
+    {
+        if ((err = bg_node_generate(g, current_node, lvl)) != bg_SUCCESS)
+            return err;
+        /*After we have generated a node we append it to the list of visited nodes. NEEDED for back edge detection!*/
+        bg_list_append(g->visited_nodes, current_node);
+        g->nodes++;
+    }
+
+    /*And finally through the list of output nodes*/
+    for (current_node = bg_node_list_first(graph->output_nodes, &it);
             current_node;
             current_node = bg_node_list_next(&it))
     {
