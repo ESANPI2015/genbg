@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8)
 
-project(genBG)
+project(genbg)
 
 include_directories(src)
 include_directories(include)
@@ -11,8 +11,8 @@ include_directories(include)
 
 # This is not possible without mars cmake file :/ So we have to compile this on our own
 if(NOT TARGET c_bagel)
-    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../ext/c_bagel c_bagel)
-    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../ext/c_bagel/src)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../../ext/c_bagel c_bagel)
+    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../ext/c_bagel/src)
 endif(NOT TARGET c_bagel)
 
 SET(ENV{PKG_CONFIG_PATH}
@@ -20,14 +20,14 @@ SET(ENV{PKG_CONFIG_PATH}
     )
 
 find_package(PkgConfig)
-pkg_check_modules(genBG_PKGCONFIG REQUIRED
+pkg_check_modules(genbg_PKGCONFIG REQUIRED
     c_bagel
     )
 
-include_directories(${genBG_PKGCONFIG_INCLUDE_DIRS})
-message(${genBG_PKGCONFIG_INCLUDE_DIRS})
-link_directories(${genBG_PKGCONFIG_LIBRARY_DIRS})
-add_definitions(${genBG_PKGCONFIG_CFLAGS_OTHER} -ggdb)
+include_directories(${genbg_PKGCONFIG_INCLUDE_DIRS})
+message(${genbg_PKGCONFIG_INCLUDE_DIRS})
+link_directories(${genbg_PKGCONFIG_LIBRARY_DIRS})
+add_definitions(${genbg_PKGCONFIG_CFLAGS_OTHER} -ggdb)
 
 set(SOURCES
     src/bg_generate_c.c
@@ -45,9 +45,9 @@ set(HEADERS
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/")
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
-add_library(genBG STATIC ${SOURCES})
-target_link_libraries(genBG
-    ${genBG_PKGCONFIG_LIBRARIES}
+add_library(genbg STATIC ${SOURCES})
+target_link_libraries(genbg
+    ${genbg_PKGCONFIG_LIBRARIES}
     )
 
 # pkg-config, to be installed:
